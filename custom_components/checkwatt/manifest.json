@@ -1,0 +1,17 @@
+{
+  "domain": "checkwatt",
+  "name": "Checkwatt",
+  "codeowners": [
+    "@faanskit"
+  ],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/faanskit/ha-checkwatt#readme",
+  "homekit": {},
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/faanskit/ha-checkwatt/issues",
+  "requirements": [],
+  "ssdp": [],
+  "version": "0.0.1",
+  "zeroconf": []
+}
