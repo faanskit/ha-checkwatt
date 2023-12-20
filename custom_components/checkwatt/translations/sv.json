@@ -23,7 +23,8 @@
         "step": {
             "init": {
                 "data": {
-                    "show_details": "Visa detaljerade sensorer"
+                    "show_details": "Visa detaljerade sensorer",
+                    "show_detailed_attributes": "Visa detaljerade attribut"
                 },
                 "description": "Dina val",
                 "title": "Checkwatt"

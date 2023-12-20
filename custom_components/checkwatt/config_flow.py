@@ -12,7 +12,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 
-from .const import CONF_DETAILED_SENSORS, DOMAIN
+from .const import CONF_DETAILED_ATTRIBUTES, CONF_DETAILED_SENSORS, DOMAIN
 from .pycheckwatt import CheckwattManager
 
 CONF_TITLE = "Checkwatt"
@@ -69,9 +69,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_create_entry(
                 title=CONF_TITLE,
                 data=self.data,
-                options={
-                    CONF_DETAILED_SENSORS: False,
-                },
+                options={CONF_DETAILED_SENSORS: False, CONF_DETAILED_ATTRIBUTES: False},
             )
 
         return self.async_show_form(
@@ -108,7 +106,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     vol.Required(
                         CONF_DETAILED_SENSORS,
                         default=self.config_entry.options.get(CONF_DETAILED_SENSORS),
-                    ): bool
+                    ): bool,
+                    vol.Required(
+                        CONF_DETAILED_ATTRIBUTES,
+                        default=self.config_entry.options.get(CONF_DETAILED_ATTRIBUTES),
+                    ): bool,
                 }
             ),
         )
