@@ -105,6 +105,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     "city": cw_inst.customer_details["City"],
                     "display_name": cw_inst.customer_details["Meter"][0]["DisplayName"],
                     "revenue": cw_inst.today_revenue,
+                    "tomorrow_revenue": round(cw_inst.tomorrow_revenue, 2),
                 }
                 return response_data
 

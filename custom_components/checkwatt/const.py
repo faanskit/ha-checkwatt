@@ -17,4 +17,4 @@ CHECKWATT_MODEL = "Checkwatt"
 C_ADR = "Street Address"
 C_ZIP = "Zip Code"
 C_CITY = "City"
-
+C_TOMORROW = "Tomorrow revenue"

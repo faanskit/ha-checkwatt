@@ -20,6 +20,7 @@ from . import CheckwattCoordinator, CheckwattResp
 from .const import (
     C_ADR,
     C_CITY,
+    C_TOMORROW,
     C_ZIP,
     CHECKWATT_MODEL,
     CONF_DETAILED_SENSORS,
@@ -95,6 +96,7 @@ class CheckwattSensor(CheckwattTemplateSensor):
             C_ADR: self._coordinator.data["address"],
             C_ZIP: self._coordinator.data["zip"],
             C_CITY: self._coordinator.data["city"],
+            C_TOMORROW: self._coordinator.data["tomorrow_revenue"],
         }
         self._attr_available = True
 
@@ -105,6 +107,9 @@ class CheckwattSensor(CheckwattTemplateSensor):
         self._attr_extra_state_attributes[C_ADR] = self._coordinator.data["address"]
         self._attr_extra_state_attributes[C_ZIP] = self._coordinator.data["zip"]
         self._attr_extra_state_attributes[C_CITY] = self._coordinator.data["city"]
+        self._attr_extra_state_attributes[C_TOMORROW] = self._coordinator.data[
+            "tomorrow_revenue"
+        ]
 
     @property
     def native_value(self) -> str | None:
