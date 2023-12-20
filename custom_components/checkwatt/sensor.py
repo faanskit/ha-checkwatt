@@ -5,14 +5,19 @@ import datetime
 from datetime import timedelta
 import logging
 
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorStateClass,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.generated import currencies
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from . import CheckwattCoordinator, CheckwattResponse
+from . import CheckwattCoordinator, CheckwattResp
 from .const import (
     C_ADR,
     C_CITY,
@@ -39,10 +44,10 @@ async def async_setup_entry(
     """Set up the Checkwatt sensor."""
     coordinator: CheckwattCoordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[CheckwattTemplateSensor] = []
-    checkwatt_data: CheckwattResponse = coordinator.data
+    checkwatt_data: CheckwattResp = coordinator.data
     use_detailed_sensors = entry.options.get(CONF_DETAILED_SENSORS)
 
-    _LOGGER.debug("Setting up Checkwatt sensor for %s", checkwatt_data["LastName"])
+    _LOGGER.debug("Setting up Checkwatt sensor for %s", checkwatt_data["display_name"])
     entities.append(CheckwattSensor(coordinator, use_detailed_sensors))
     async_add_entities(entities, True)
 
@@ -55,11 +60,9 @@ class CheckwattTemplateSensor(CoordinatorEntity[CheckwattCoordinator], SensorEnt
         super().__init__(coordinator)
         self._coordinator = coordinator
         self._use_detailed_sensors = use_detailed_sensors
-        self._id = self._coordinator.data["Meter"][0]["Id"]
-        self._attr_unique_id = (
-            f"checkwattUid_{self._coordinator.data['Meter'][0]['FacilityId']}"
-        )
-        self._device_name = f"{self._coordinator.data['Meter'][0]['DisplayName']}"
+        self._id = self._coordinator.data["id"]
+        self._attr_unique_id = f'checkwattUid_{self._coordinator.data["id"]}'
+        self._device_name = self._coordinator.data["display_name"]
         self._device_model = CHECKWATT_MODEL
 
     @property
@@ -85,12 +88,15 @@ class CheckwattSensor(CheckwattTemplateSensor):
         self._last_updated: datetime.datetime | None = None
 
         self._attr_icon = ICON_PANEL
-        self._attr_name = f"Checkwatt {self._device_name} Status"
+        self._attr_name = f"Checkwatt {self._device_name}"
+        self._attr_device_class = SensorDeviceClass.MONETARY
+        self._attr_state_class = SensorStateClass.TOTAL
+        self._attr_native_unit_of_measurement = "SEK"
 
         self._attr_extra_state_attributes = {
-            C_ADR: f"{self._coordinator.data['Meter'][0]['StreetAddress']}",
-            C_ZIP: f"{self._coordinator.data['Meter'][0]['ZipCode']}",
-            C_CITY: f"{self._coordinator.data['Meter'][0]['City']}",
+            C_ADR: self._coordinator.data["address"],
+            C_ZIP: self._coordinator.data["zip"],
+            C_CITY: self._coordinator.data["city"],
         }
         self._attr_available = True
 
@@ -98,17 +104,11 @@ class CheckwattSensor(CheckwattTemplateSensor):
         """Get the latest data and updates the states."""
         # Setup static attributes
         self._attr_available = True
-        self._attr_extra_state_attributes[
-            C_ADR
-        ] = f"{self._coordinator.data['Meter'][0]['StreetAddress']}"
-        self._attr_extra_state_attributes[
-            C_ZIP
-        ] = f"{self._coordinator.data['Meter'][0]['ZipCode']}"
-        self._attr_extra_state_attributes[
-            C_CITY
-        ] = f"{self._coordinator.data['Meter'][0]['City']}"
+        self._attr_extra_state_attributes[C_ADR] = self._coordinator.data["address"]
+        self._attr_extra_state_attributes[C_ZIP] = self._coordinator.data["zip"]
+        self._attr_extra_state_attributes[C_CITY] = self._coordinator.data["city"]
 
     @property
     def native_value(self) -> str | None:
         """Get the latest state value."""
-        return f"{self._coordinator.data['Meter'][0]['ProcessStatus']}"
+        return self._coordinator.data["revenue"]

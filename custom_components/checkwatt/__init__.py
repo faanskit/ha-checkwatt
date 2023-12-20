@@ -16,25 +16,24 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .checkwatt import get_checkwatt_data
 from .const import CONF_DETAILED_SENSORS, CONF_UPDATE_INTERVAL, DOMAIN
+from .pycheckwatt import CheckwattManager
 
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[Platform] = [Platform.SENSOR]
 
 
-class CheckwattList(TypedDict):
-    """API response for checkwattList."""
-
-    inverter_make: str
-    inverter_model: str
-    battery_make: str
-    battery_model: str
-
-
-class CheckwattResponse(TypedDict):
+class CheckwattResp(TypedDict):
     """API response."""
 
-    checkwattList: list[CheckwattList]
+    id: str
+    firstname: str
+    lastname: str
+    address: str
+    zip: str
+    city: str
+    display_name: str
+    revenue: float
 
 
 async def update_listener(hass: HomeAssistant, entry):
@@ -63,7 +62,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return unload_ok
 
 
-class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResponse]):
+class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
     """Data update coordinator."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
@@ -83,18 +82,40 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResponse]):
         """Return entry ID."""
         return self._entry.entry_id
 
-    async def _async_update_data(self) -> CheckwattResponse:
+    async def _async_update_data(self) -> CheckwattResp:
         """Fetch the latest data from the source."""
+
         try:
-            data = await self.hass.async_add_executor_job(
-                get_data, self.hass, self._entry.data, self._entry.options
-            )
+            # data = await self.hass.async_add_executor_job(
+            #     get_data, self.hass, self._entry.data, self._entry.options
+            # )
+            username = self._entry.data.get(CONF_USERNAME)
+            password = self._entry.data.get(CONF_PASSWORD)
+
+            async with CheckwattManager(username, password) as cw_inst:
+                if not await cw_inst.login():
+                    raise InvalidAuth
+                if not await cw_inst.get_customer_details():
+                    raise UpdateFailed("Unknown error get_customer_details")
+                if not await cw_inst.get_fcrd_revenue():
+                    raise UpdateFailed("Unknown error get_fcrd_revenue")
+
+                response_data: CheckwattResp = {
+                    "id": cw_inst.customer_details["Id"],
+                    "firstname": cw_inst.customer_details["FirstName"],
+                    "lastname": cw_inst.customer_details["LastName"],
+                    "address": cw_inst.customer_details["StreetAddress"],
+                    "zip": cw_inst.customer_details["ZipCode"],
+                    "city": cw_inst.customer_details["City"],
+                    "display_name": cw_inst.customer_details["Meter"][0]["DisplayName"],
+                    "revenue": cw_inst.today_revenue,
+                }
+                return response_data
+
         except InvalidAuth as err:
             raise ConfigEntryAuthFailed from err
         except CheckwattError as err:
             raise UpdateFailed(str(err)) from err
-
-        return data
 
 
 class CheckwattError(HomeAssistantError):
@@ -115,7 +136,7 @@ class UnknownError(CheckwattError):
 
 def get_data(
     hass: HomeAssistant, config: Mapping[str, Any], options: Mapping[str, Any]
-) -> CheckwattResponse:
+) -> CheckwattResp:
     """Get data from the API."""
 
     username = config.get(CONF_USERNAME)
@@ -156,4 +177,4 @@ def get_data(
         if checkwatt_info.get("Status") != "Success":
             _LOGGER.exception("Unexpected response: %s", checkwatt_info)
             raise UnknownError
-    return cast(CheckwattResponse, checkwatt_info)
+    return cast(CheckwattResp, checkwatt_info)
