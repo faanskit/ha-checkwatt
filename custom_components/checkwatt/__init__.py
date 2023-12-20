@@ -30,6 +30,7 @@ class CheckwattResp(TypedDict):
     city: str
     display_name: str
     revenue: float
+    tomorrow_revenue: float
 
 
 async def update_listener(hass: HomeAssistant, entry):
@@ -68,10 +69,8 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
             _LOGGER,
             name=DOMAIN,
             update_interval=timedelta(minutes=CONF_UPDATE_INTERVAL),
-            # update_interval=timedelta(seconds=20),
         )
         self._entry = entry
-        self.temp = 3
 
     @property
     def entry_id(self) -> str:
@@ -82,9 +81,6 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
         """Fetch the latest data from the source."""
 
         try:
-            # data = await self.hass.async_add_executor_job(
-            #     get_data, self.hass, self._entry.data, self._entry.options
-            # )
             username = self._entry.data.get(CONF_USERNAME)
             password = self._entry.data.get(CONF_PASSWORD)
 

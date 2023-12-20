@@ -3,7 +3,7 @@ from typing import Final
 
 DOMAIN = "checkwatt"
 CONF_MONITORED_SITES = "monitored_sites"
-CONF_UPDATE_INTERVAL = 5
+CONF_UPDATE_INTERVAL = 15
 ATTRIBUTION = "Data provided by Checkwwatt EnergyInBalance"
 MANUFACTURER = "Checkwatt"
 
