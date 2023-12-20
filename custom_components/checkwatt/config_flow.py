@@ -4,7 +4,6 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-import requests
 import voluptuous as vol
 
 from homeassistant import config_entries
@@ -12,13 +11,9 @@ from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import config_validation as cv
 
-from .const import (
-    DOMAIN,
-    CONF_DETAILED_SENSORS,
-)
-from .checkwatt import checkwatt_autenticate
+from .const import CONF_DETAILED_SENSORS, DOMAIN
+from .pycheckwatt import CheckwattManager
 
 CONF_TITLE = "Checkwatt"
 
@@ -31,43 +26,14 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
     }
 )
 
-class CheckwattHub:
-    """Checkwatt configuration validations."""
-
-    def __init__(self) -> None:
-        """Initialize."""
-        
-    def autenticate(self, username: str, password: str) -> bool:
-        """Login to EnergyInBalance to validate."""
-        try:
-            checkwatt_autenticate(username, password)
-
-        except requests.exceptions.HTTPError:
-            _LOGGER.error("Login: HTTPError")
-            return False
-        except requests.exceptions.ConnectionError:
-            _LOGGER.error("Login: ConnectionError")
-            return False
-        except requests.exceptions.Timeout:
-            _LOGGER.error("Login: Timeout")
-            return False
-        except requests.exceptions.RequestException:
-            _LOGGER.error("Login: RequestException")
-            return False
-        
-        return True
-
 
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
-    """Validate that the user input allows us to connect."""
-
-    hub = CheckwattHub()
-    if not await hass.async_add_executor_job(
-        hub.autenticate,
-        data[CONF_USERNAME],
-        data[CONF_PASSWORD],
-    ):
-        raise InvalidAuth
+    """Validate that the user input allows us to connect to Checkwatt."""
+    async with CheckwattManager(
+        data[CONF_USERNAME], data[CONF_PASSWORD]
+    ) as check_watt_instance:
+        if not await check_watt_instance.login():
+            raise InvalidAuth
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -75,7 +41,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Set up the the config flow."""
         self.data = {}
 
@@ -150,6 +116,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
 class CannotConnect(HomeAssistantError):
     """Error to indicate we cannot connect."""
+
 
 class InvalidAuth(HomeAssistantError):
     """Error to indicate there is invalid auth."""

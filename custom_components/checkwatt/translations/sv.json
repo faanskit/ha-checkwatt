@@ -1,34 +1,33 @@
 {
-  "config": {
-    "step": {
-      "user": {
-        "data": {
-          "username": "Användarnamn",
-          "password": "Lösenord"
+    "config": {
+        "step": {
+            "user": {
+                "data": {
+                    "username": "Användarnamn",
+                    "password": "Lösenord"
+                },
+                "description": "Ange namn och lösen till ditt Checkwatt konto",
+                "title":"Checkwatt"
+            }
         },
-        "description": "Ange namn och lösen till ditt Checkwatt konto",
-        "title":"Checkwatt"
-      }
-    },
-    "error": {
-      "cannot_connect": "Kan inte ansluta",
-      "invalid_auth": "Kan inte authentisera",
-      "unknown": "Okänt fel",
-      "no_sites": "Inga monitorerade siter valda"
-    },
-    "abort": {
-      "already_configured": "Redan konfigurerad"
-    }
-  },
-  "options": {
-    "step": {
-      "init": {
-        "data": {
-          "show_details": "Visa detaljerade sensorer"
+        "error": {
+            "cannot_connect": "Kan inte ansluta",
+            "invalid_auth": "Kan inte authentisera",
+            "unknown": "Okänt fel"
         },
-        "description": "Dina val",
-        "title": "Checkwatt"
-      }
+        "abort": {
+            "already_configured": "Redan konfigurerad"
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "data": {
+                    "show_details": "Visa detaljerade sensorer"
+                },
+                "description": "Dina val",
+                "title": "Checkwatt"
+            }
+        }
     }
-  }
 }

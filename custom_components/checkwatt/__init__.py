@@ -14,19 +14,22 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DOMAIN, CONF_UPDATE_INTERVAL, CONF_DETAILED_SENSORS
 from .checkwatt import get_checkwatt_data
+from .const import CONF_DETAILED_SENSORS, CONF_UPDATE_INTERVAL, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[Platform] = [Platform.SENSOR]
 
+
 class CheckwattList(TypedDict):
     """API response for checkwattList."""
+
     inverter_make: str
     inverter_model: str
     battery_make: str
     battery_model: str
+
 
 class CheckwattResponse(TypedDict):
     """API response."""
@@ -34,13 +37,15 @@ class CheckwattResponse(TypedDict):
     checkwattList: list[CheckwattList]
 
 
-async def update_listener(hass, entry):
+async def update_listener(hass: HomeAssistant, entry):
     """Handle options update."""
     _LOGGER.debug(entry.options)
+    if not hass:  # Not sure, to remove warning
+        await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up Checkwayy from a config entry."""
+    """Set up Checkwatt from a config entry."""
     coordinator = CheckwattCoordinator(hass, entry)
     await coordinator.async_config_entry_first_refresh()
 
@@ -126,13 +131,13 @@ def get_data(
         checkwatt_info = get_checkwatt_data(username, password, detailed_sensors)
 
     except requests.exceptions.HTTPError as errh:
-        raise requests.exceptions.HTTPError(errh)
+        raise requests.exceptions.HTTPError(errh) from errh
     except requests.exceptions.ConnectionError as errc:
-        raise requests.exceptions.ConnectionError(errc)
+        raise requests.exceptions.ConnectionError(errc) from errc
     except requests.exceptions.Timeout as errt:
-        raise requests.exceptions.Timeout(errt)
+        raise requests.exceptions.Timeout(errt) from errt
     except requests.exceptions.RequestException as errr:
-        raise requests.exceptions.RequestException(errr)
+        raise requests.exceptions.RequestException(errr) from errr
     except ValueError as err:
         err_str = str(err)
 
@@ -148,7 +153,7 @@ def get_data(
         if "error" in checkwatt_info:
             raise UnknownError(checkwatt_info["error"])
 
-        if checkwatt_info.get("status") != "success":
+        if checkwatt_info.get("Status") != "Success":
             _LOGGER.exception("Unexpected response: %s", checkwatt_info)
             raise UnknownError
     return cast(CheckwattResponse, checkwatt_info)
