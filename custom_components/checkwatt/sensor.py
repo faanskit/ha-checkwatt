@@ -27,8 +27,7 @@ from .const import (
     MANUFACTURER,
 )
 
-ICON_POWER = "mdi:solar-power"
-ICON_PANEL = "mdi:solar-panel"
+ICON_CASH = "mdi:account-cash"
 
 SCAN_INTERVAL = timedelta(minutes=1)
 MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=5)
@@ -86,7 +85,7 @@ class CheckwattSensor(CheckwattTemplateSensor):
         )
         self._last_updated: datetime.datetime | None = None
 
-        self._attr_icon = ICON_PANEL
+        self._attr_icon = ICON_CASH
         self._attr_name = f"Checkwatt {self._device_name}"
         self._attr_device_class = SensorDeviceClass.MONETARY
         self._attr_state_class = SensorStateClass.TOTAL

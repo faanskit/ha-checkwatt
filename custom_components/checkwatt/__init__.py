@@ -1,12 +1,9 @@
 """The Checkwatt integration."""
 from __future__ import annotations
 
-from collections.abc import Mapping
 from datetime import timedelta
 import logging
-from typing import Any, TypedDict, cast
-
-import requests
+from typing import TypedDict
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
@@ -14,8 +11,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .checkwatt import get_checkwatt_data
-from .const import CONF_DETAILED_SENSORS, CONF_UPDATE_INTERVAL, DOMAIN
+from .const import CONF_UPDATE_INTERVAL, DOMAIN
 from .pycheckwatt import CheckwattManager
 
 _LOGGER = logging.getLogger(__name__)
@@ -132,49 +128,3 @@ class APIRatelimitExceeded(CheckwattError):
 
 class UnknownError(CheckwattError):
     """Raised when an unknown error occurs."""
-
-
-def get_data(
-    hass: HomeAssistant, config: Mapping[str, Any], options: Mapping[str, Any]
-) -> CheckwattResp:
-    """Get data from the API."""
-
-    username = config.get(CONF_USERNAME)
-    password = config.get(CONF_PASSWORD)
-    detailed_sensors = options.get(CONF_DETAILED_SENSORS)
-
-    try:
-        _LOGGER.debug(
-            "Fetching data with username %s with detailed sensors option set to %s",
-            username,
-            detailed_sensors,
-        )
-        checkwatt_info = get_checkwatt_data(username, password, detailed_sensors)
-
-    except requests.exceptions.HTTPError as errh:
-        raise requests.exceptions.HTTPError(errh) from errh
-    except requests.exceptions.ConnectionError as errc:
-        raise requests.exceptions.ConnectionError(errc) from errc
-    except requests.exceptions.Timeout as errt:
-        raise requests.exceptions.Timeout(errt) from errt
-    except requests.exceptions.RequestException as errr:
-        raise requests.exceptions.RequestException(errr) from errr
-    except ValueError as err:
-        err_str = str(err)
-
-        if "Invalid authentication credentials" in err_str:
-            raise InvalidAuth from err
-        if "API rate limit exceeded." in err_str:
-            raise APIRatelimitExceeded from err
-
-        _LOGGER.exception("Unexpected exception")
-        raise UnknownError from err
-
-    else:
-        if "error" in checkwatt_info:
-            raise UnknownError(checkwatt_info["error"])
-
-        if checkwatt_info.get("Status") != "Success":
-            _LOGGER.exception("Unexpected response: %s", checkwatt_info)
-            raise UnknownError
-    return cast(CheckwattResp, checkwatt_info)
