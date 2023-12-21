@@ -12,7 +12,7 @@ from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util.dt import now
 
-from .const import CONF_UPDATE_INTERVAL, DOMAIN
+from .const import CONF_DETAILED_SENSORS, CONF_UPDATE_INTERVAL, DOMAIN
 from .pycheckwatt import CheckwattManager
 
 _LOGGER = logging.getLogger(__name__)
@@ -37,6 +37,12 @@ class CheckwattResp(TypedDict):
     fcr_d_status: str
     fcr_d_state: str
     fcr_d_date: str
+    total_solar_energy: float
+    total_charging_energy: float
+    total_discharging_energy: float
+    total_import_energy: float
+    total_export_energy: float
+    spot_price: float
 
 
 async def update_listener(hass: HomeAssistant, entry):
@@ -89,6 +95,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
         try:
             username = self._entry.data.get(CONF_USERNAME)
             password = self._entry.data.get(CONF_PASSWORD)
+            use_detailed_sensors = self._entry.options.get(CONF_DETAILED_SENSORS)
             _LOGGER.debug("Fetching data from checkwatt")
 
             async with CheckwattManager(username, password) as cw_inst:
@@ -98,12 +105,19 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     raise UpdateFailed("Unknown error get_customer_details")
                 if not await cw_inst.get_fcrd_revenue():
                     raise UpdateFailed("Unknown error get_fcrd_revenue")
+                if use_detailed_sensors:
+                    if not await cw_inst.get_power_data():
+                        raise UpdateFailed("Unknown error get_power_data")
+                    if not await cw_inst.get_price_zone():
+                        raise UpdateFailed("Unknown error get_price_zone")
+                    if not await cw_inst.get_spot_price():
+                        raise UpdateFailed("Unknown error get_spot_price")
 
                 update_time = now().strftime("%Y-%m-%d %H:%M:%S")
                 end_date = now() + self.update_interval
                 next_update_time = end_date.strftime("%Y-%m-%d %H:%M:%S")
 
-                response_data: CheckwattResp = {
+                resp: CheckwattResp = {
                     "id": cw_inst.customer_details["Id"],
                     "firstname": cw_inst.customer_details["FirstName"],
                     "lastname": cw_inst.customer_details["LastName"],
@@ -119,7 +133,16 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     "fcr_d_state": cw_inst.fcrd_percentage,
                     "fcr_d_date": cw_inst.fcrd_timestamp,
                 }
-                return response_data
+                if use_detailed_sensors:
+                    resp["total_solar_energy"] = cw_inst.total_solar_energy
+                    resp["total_charging_energy"] = cw_inst.total_charging_energy
+                    resp["total_discharging_energy"] = cw_inst.total_discharging_energy
+                    resp["total_import_energy"] = cw_inst.total_import_energy
+                    resp["total_export_energy"] = cw_inst.total_export_energy
+                    time_hour = int(now().strftime("%H"))
+                    resp["spot_price"] = cw_inst.get_spot_price_excl_vat(time_hour)
+
+                return resp
 
         except InvalidAuth as err:
             raise ConfigEntryAuthFailed from err
