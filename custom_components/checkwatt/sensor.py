@@ -11,7 +11,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -36,9 +36,7 @@ from .const import (
 
 ICON_CASH = "mdi:account-cash"
 
-SCAN_INTERVAL = timedelta(minutes=1)
-MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=5)
-PARALLEL_UPDATES = 0
+DEFAULT_SCAN_INTERVAL = timedelta(seconds=30)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -134,17 +132,28 @@ class CheckwattSensor(CheckwattTemplateSensor):
                 {C_FCRD_DATE: self._coordinator.data["fcr_d_date"]}
             )
 
-        self._attr_available = True
+        self._attr_available = False
 
     async def async_update(self) -> None:
         """Get the latest data and updates the states."""
+        _LOGGER.debug("Capturing the update")
         self._attr_available = True
-        self._attr_extra_state_attributes[C_ADR] = self._coordinator.data["address"]
-        self._attr_extra_state_attributes[C_ZIP] = self._coordinator.data["zip"]
-        self._attr_extra_state_attributes[C_CITY] = self._coordinator.data["city"]
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Get the latest data and updates the states."""
+
+        _LOGGER.debug("Updating sensor values (_handle_coordinator_update)")
+
+        # Update the native value
+        self._attr_native_value = self._coordinator.data["revenue"]
+
+        # Update the normal attributes
         self._attr_extra_state_attributes[C_TOMORROW] = self._coordinator.data[
             "tomorrow_revenue"
         ]
+
+        # Update the extra attributes
         if self.use_detailed_attributes:
             self._attr_extra_state_attributes.update(
                 {C_UPDATE_TIME: self._coordinator.data["update_time"]}
@@ -161,6 +170,7 @@ class CheckwattSensor(CheckwattTemplateSensor):
             self._attr_extra_state_attributes.update(
                 {C_FCRD_DATE: self._coordinator.data["fcr_d_date"]}
             )
+        super()._handle_coordinator_update()
 
     @property
     def native_value(self) -> str | None:
