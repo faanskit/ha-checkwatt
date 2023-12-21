@@ -20,7 +20,9 @@ from . import CheckwattCoordinator, CheckwattResp
 from .const import (
     C_ADR,
     C_CITY,
+    C_NEXT_UPDATE_TIME,
     C_TOMORROW,
+    C_UPDATE_TIME,
     C_ZIP,
     CHECKWATT_MODEL,
     CONF_DETAILED_ATTRIBUTES,
@@ -112,9 +114,13 @@ class CheckwattSensor(CheckwattTemplateSensor):
             C_TOMORROW: self._coordinator.data["tomorrow_revenue"],
         }
         if use_detailed_attributes:
-            # TODO
             # Add extra attributes as required
-            self._attr_extra_state_attributes.update({"Detailed": "Example"})
+            self._attr_extra_state_attributes.update(
+                {C_UPDATE_TIME: self._coordinator.data["update_time"]}
+            )
+            self._attr_extra_state_attributes.update(
+                {C_NEXT_UPDATE_TIME: self._coordinator.data["next_update_time"]}
+            )
 
         self._attr_available = True
 
@@ -128,7 +134,12 @@ class CheckwattSensor(CheckwattTemplateSensor):
             "tomorrow_revenue"
         ]
         if self.use_detailed_attributes:
-            self._attr_extra_state_attributes.update({"Detailed": "Example"})
+            self._attr_extra_state_attributes.update(
+                {C_UPDATE_TIME: self._coordinator.data["update_time"]}
+            )
+            self._attr_extra_state_attributes.update(
+                {C_NEXT_UPDATE_TIME: self._coordinator.data["next_update_time"]}
+            )
 
     @property
     def native_value(self) -> str | None:

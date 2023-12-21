@@ -10,6 +10,7 @@ from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util.dt import now
 
 from .const import CONF_UPDATE_INTERVAL, DOMAIN
 from .pycheckwatt import CheckwattManager
@@ -31,6 +32,8 @@ class CheckwattResp(TypedDict):
     display_name: str
     revenue: float
     tomorrow_revenue: float
+    update_time: str
+    next_update_time: str
 
 
 async def update_listener(hass: HomeAssistant, entry):
@@ -92,6 +95,10 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                 if not await cw_inst.get_fcrd_revenue():
                     raise UpdateFailed("Unknown error get_fcrd_revenue")
 
+                update_time = now().strftime("%Y-%m-%d %H:%M:%S")
+                end_date = now() + self.update_interval
+                next_update_time = end_date.strftime("%Y-%m-%d %H:%M:%S")
+
                 response_data: CheckwattResp = {
                     "id": cw_inst.customer_details["Id"],
                     "firstname": cw_inst.customer_details["FirstName"],
@@ -100,6 +107,8 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     "zip": cw_inst.customer_details["ZipCode"],
                     "city": cw_inst.customer_details["City"],
                     "display_name": cw_inst.customer_details["Meter"][0]["DisplayName"],
+                    "update_time": update_time,
+                    "next_update_time": next_update_time,
                     "revenue": cw_inst.today_revenue,
                     "tomorrow_revenue": round(cw_inst.tomorrow_revenue, 2),
                 }
