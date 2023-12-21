@@ -34,6 +34,9 @@ class CheckwattResp(TypedDict):
     tomorrow_revenue: float
     update_time: str
     next_update_time: str
+    fcr_d_status: str
+    fcr_d_state: str
+    fcr_d_date: str
 
 
 async def update_listener(hass: HomeAssistant, entry):
@@ -111,6 +114,9 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     "next_update_time": next_update_time,
                     "revenue": cw_inst.today_revenue,
                     "tomorrow_revenue": round(cw_inst.tomorrow_revenue, 2),
+                    "fcr_d_status": cw_inst.fcrd_state,
+                    "fcr_d_state": cw_inst.fcrd_percentage,
+                    "fcr_d_date": cw_inst.fcrd_timestamp,
                 }
                 return response_data
 

@@ -20,6 +20,9 @@ from . import CheckwattCoordinator, CheckwattResp
 from .const import (
     C_ADR,
     C_CITY,
+    C_FCRD_DATE,
+    C_FCRD_STATE,
+    C_FCRD_STATUS,
     C_NEXT_UPDATE_TIME,
     C_TOMORROW,
     C_UPDATE_TIME,
@@ -121,6 +124,15 @@ class CheckwattSensor(CheckwattTemplateSensor):
             self._attr_extra_state_attributes.update(
                 {C_NEXT_UPDATE_TIME: self._coordinator.data["next_update_time"]}
             )
+            self._attr_extra_state_attributes.update(
+                {C_FCRD_STATUS: self._coordinator.data["fcr_d_status"]}
+            )
+            self._attr_extra_state_attributes.update(
+                {C_FCRD_STATE: self._coordinator.data["fcr_d_state"]}
+            )
+            self._attr_extra_state_attributes.update(
+                {C_FCRD_DATE: self._coordinator.data["fcr_d_date"]}
+            )
 
         self._attr_available = True
 
@@ -139,6 +151,15 @@ class CheckwattSensor(CheckwattTemplateSensor):
             )
             self._attr_extra_state_attributes.update(
                 {C_NEXT_UPDATE_TIME: self._coordinator.data["next_update_time"]}
+            )
+            self._attr_extra_state_attributes.update(
+                {C_FCRD_STATUS: self._coordinator.data["fcr_d_status"]}
+            )
+            self._attr_extra_state_attributes.update(
+                {C_FCRD_STATE: self._coordinator.data["fcr_d_state"]}
+            )
+            self._attr_extra_state_attributes.update(
+                {C_FCRD_DATE: self._coordinator.data["fcr_d_date"]}
             )
 
     @property
