@@ -11,6 +11,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import UnitOfEnergy
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -35,6 +36,13 @@ from .const import (
 )
 
 ICON_CASH = "mdi:account-cash"
+ICON_SOLAR_PANEL = "mdi:solar-power-variant-outline"
+ICON_BATTERY_CHARGE = "mdi:home-battery"
+ICON_BATTERY_DISCHARGE = "mdi:home-battery-outline"
+ICON_ENERGY_IMPORT = "mdi:transmission-tower-export"
+ICON_ENERGY_EXPORT = "mdi:transmission-tower-import"
+ICON_SPOT_PRICE = "mdi:chart-line"
+ICON_SPOT_PRICE_VAT = "mdi:chart-multiple"
 
 DEFAULT_SCAN_INTERVAL = timedelta(seconds=30)
 
@@ -53,15 +61,32 @@ async def async_setup_entry(
 
     _LOGGER.debug("Setting up Checkwatt sensor for %s", checkwatt_data["display_name"])
     entities.append(CheckwattSensor(coordinator, use_detailed_attributes))
-    async_add_entities(entities, True)
 
     if use_detailed_sensors:
         _LOGGER.debug(
             "Setting up detailed Checkwatt sensors for %s",
             checkwatt_data["display_name"],
         )
-        # TODO
         # Add additional sensors required
+        entities.append(CheckwattSolarSensor(coordinator, use_detailed_attributes))
+        entities.append(
+            CheckwattBatteryChargingSensor(coordinator, use_detailed_attributes)
+        )
+        entities.append(
+            CheckwattBatteryDischargingSensor(coordinator, use_detailed_attributes)
+        )
+        entities.append(
+            CheckwattImportEnergySensor(coordinator, use_detailed_attributes)
+        )
+        entities.append(
+            CheckwattExportEnergySensor(coordinator, use_detailed_attributes)
+        )
+        entities.append(CheckwattSpotPriceSensor(coordinator, use_detailed_attributes))
+        entities.append(
+            CheckwattSpotPriceVATSensor(coordinator, use_detailed_attributes)
+        )
+
+    async_add_entities(entities, True)
 
 
 class CheckwattTemplateSensor(CoordinatorEntity[CheckwattCoordinator], SensorEntity):
@@ -136,7 +161,6 @@ class CheckwattSensor(CheckwattTemplateSensor):
 
     async def async_update(self) -> None:
         """Get the latest data and updates the states."""
-        _LOGGER.debug("Capturing the update")
         self._attr_available = True
 
     @callback
@@ -176,3 +200,276 @@ class CheckwattSensor(CheckwattTemplateSensor):
     def native_value(self) -> str | None:
         """Get the latest state value."""
         return self._coordinator.data["revenue"]
+
+
+class CheckwattSolarSensor(CheckwattTemplateSensor):
+    """Representation of a Checkwatt Solar sensor."""
+
+    def __init__(
+        self, coordinator: CheckwattCoordinator, use_detailed_attributes
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(
+            coordinator=coordinator, use_detailed_attributes=use_detailed_attributes
+        )
+        self._last_updated: datetime.datetime | None = None
+        self._attr_icon = ICON_SOLAR_PANEL
+        self._attr_unique_id = f'checkwattUid_solar_{self._coordinator.data["id"]}'
+        self._attr_name = f"Solar Energy {self._device_name}"
+        self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+        self._attr_device_class = SensorDeviceClass.ENERGY
+        self._attr_state_class = SensorStateClass.TOTAL_INCREASING
+        self._attr_available = False
+
+    async def async_update(self) -> None:
+        """Get the latest data and updates the states."""
+        _LOGGER.debug("Solar panel energy update")
+        self._attr_available = True
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Get the latest data and updates the states."""
+        _LOGGER.debug("Solar panel energy update via coordinator")
+        self._attr_native_value = round(
+            self._coordinator.data["total_solar_energy"] / 1000, 2
+        )
+        super()._handle_coordinator_update()
+
+    @property
+    def native_value(self) -> str | None:
+        """Get the latest state value."""
+        return round(self._coordinator.data["total_solar_energy"] / 1000, 2)
+
+
+class CheckwattBatteryChargingSensor(CheckwattTemplateSensor):
+    """Representation of a Checkwatt Battery Charge sensor."""
+
+    def __init__(
+        self, coordinator: CheckwattCoordinator, use_detailed_attributes
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(
+            coordinator=coordinator, use_detailed_attributes=use_detailed_attributes
+        )
+        self._last_updated: datetime.datetime | None = None
+        self._attr_icon = ICON_BATTERY_CHARGE
+        self._attr_unique_id = f'checkwattUid_charging_{self._coordinator.data["id"]}'
+        self._attr_name = f"Battery Charging Energy {self._device_name}"
+        self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+        self._attr_device_class = SensorDeviceClass.ENERGY
+        self._attr_state_class = SensorStateClass.TOTAL_INCREASING
+        self._attr_available = False
+
+    async def async_update(self) -> None:
+        """Get the latest data and updates the states."""
+        _LOGGER.debug("Battery charging energy update")
+        self._attr_available = True
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Get the latest data and updates the states."""
+        _LOGGER.debug("Battery charging energy update via coordinator")
+        self._attr_native_value = round(
+            self._coordinator.data["total_charging_energy"] / 1000, 2
+        )
+        super()._handle_coordinator_update()
+
+    @property
+    def native_value(self) -> str | None:
+        """Get the latest state value."""
+        return round(self._coordinator.data["total_charging_energy"] / 1000, 2)
+
+
+class CheckwattBatteryDischargingSensor(CheckwattTemplateSensor):
+    """Representation of a Checkwatt Battery Discharge sensor."""
+
+    def __init__(
+        self, coordinator: CheckwattCoordinator, use_detailed_attributes
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(
+            coordinator=coordinator, use_detailed_attributes=use_detailed_attributes
+        )
+        self._last_updated: datetime.datetime | None = None
+        self._attr_icon = ICON_BATTERY_DISCHARGE
+        self._attr_unique_id = (
+            f'checkwattUid_discharging_{self._coordinator.data["id"]}'
+        )
+        self._attr_name = f"Battery Discharging Energy {self._device_name}"
+        self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+        self._attr_device_class = SensorDeviceClass.ENERGY
+        self._attr_state_class = SensorStateClass.TOTAL_INCREASING
+        self._attr_available = False
+
+    async def async_update(self) -> None:
+        """Get the latest data and updates the states."""
+        _LOGGER.debug("Battery discharging energy update")
+        self._attr_available = True
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Get the latest data and updates the states."""
+        _LOGGER.debug("Battery discharging energy update via coordinator")
+        self._attr_native_value = round(
+            self._coordinator.data["total_discharging_energy"] / 1000, 2
+        )
+        super()._handle_coordinator_update()
+
+    @property
+    def native_value(self) -> str | None:
+        """Get the latest state value."""
+        return round(self._coordinator.data["total_discharging_energy"] / 1000, 2)
+
+
+class CheckwattImportEnergySensor(CheckwattTemplateSensor):
+    """Representation of a Checkwatt Import Energy sensor."""
+
+    def __init__(
+        self, coordinator: CheckwattCoordinator, use_detailed_attributes
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(
+            coordinator=coordinator, use_detailed_attributes=use_detailed_attributes
+        )
+        self._last_updated: datetime.datetime | None = None
+        self._attr_icon = ICON_ENERGY_IMPORT
+        self._attr_unique_id = f'checkwattUid_import_{self._coordinator.data["id"]}'
+        self._attr_name = f"Import Energy {self._device_name}"
+        self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+        self._attr_device_class = SensorDeviceClass.ENERGY
+        self._attr_state_class = SensorStateClass.TOTAL_INCREASING
+        self._attr_available = False
+
+    async def async_update(self) -> None:
+        """Get the latest data and updates the states."""
+        _LOGGER.debug("Import energy update")
+        self._attr_available = True
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Get the latest data and updates the states."""
+        _LOGGER.debug("Import energy update via coordinator")
+        self._attr_native_value = round(
+            self._coordinator.data["total_import_energy"] / 1000, 2
+        )
+        super()._handle_coordinator_update()
+
+    @property
+    def native_value(self) -> str | None:
+        """Get the latest state value."""
+        return round(self._coordinator.data["total_import_energy"] / 1000, 2)
+
+
+class CheckwattExportEnergySensor(CheckwattTemplateSensor):
+    """Representation of a Checkwatt Export Energy sensor."""
+
+    def __init__(
+        self, coordinator: CheckwattCoordinator, use_detailed_attributes
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(
+            coordinator=coordinator, use_detailed_attributes=use_detailed_attributes
+        )
+        self._last_updated: datetime.datetime | None = None
+        self._attr_icon = ICON_ENERGY_EXPORT
+        self._attr_unique_id = f'checkwattUid_export_{self._coordinator.data["id"]}'
+        self._attr_name = f"Export Energy {self._device_name}"
+        self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+        self._attr_device_class = SensorDeviceClass.ENERGY
+        self._attr_state_class = SensorStateClass.TOTAL_INCREASING
+        self._attr_available = False
+
+    async def async_update(self) -> None:
+        """Get the latest data and updates the states."""
+        _LOGGER.debug("Export energy update")
+        self._attr_available = True
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Get the latest data and updates the states."""
+        _LOGGER.debug("Export energy update via coordinator")
+        self._attr_native_value = round(
+            self._coordinator.data["total_export_energy"] / 1000, 2
+        )
+        super()._handle_coordinator_update()
+
+    @property
+    def native_value(self) -> str | None:
+        """Get the latest state value."""
+        return round(self._coordinator.data["total_export_energy"] / 1000, 2)
+
+
+class CheckwattSpotPriceSensor(CheckwattTemplateSensor):
+    """Representation of a Checkwatt Spot Price sensor."""
+
+    def __init__(
+        self, coordinator: CheckwattCoordinator, use_detailed_attributes
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(
+            coordinator=coordinator, use_detailed_attributes=use_detailed_attributes
+        )
+        self._last_updated: datetime.datetime | None = None
+        self._attr_icon = ICON_SPOT_PRICE
+        self._attr_unique_id = f'checkwattUid_spot_price_{self._coordinator.data["id"]}'
+        self._attr_name = f"Spot Price {self._device_name}"
+        self._attr_device_class = SensorDeviceClass.MONETARY
+        self._attr_state_class = SensorStateClass.TOTAL
+        self._attr_native_unit_of_measurement = "SEK/kWh"
+        self._attr_available = False
+
+    async def async_update(self) -> None:
+        """Get the latest data and updates the states."""
+        _LOGGER.debug("Spot Price update")
+        self._attr_available = True
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Get the latest data and updates the states."""
+        _LOGGER.debug("Spot Price update via coordinator")
+        self._attr_native_value = round(self._coordinator.data["spot_price"], 3)
+        super()._handle_coordinator_update()
+
+    @property
+    def native_value(self) -> str | None:
+        """Get the latest state value."""
+        return round(self._coordinator.data["spot_price"], 3)
+
+
+class CheckwattSpotPriceVATSensor(CheckwattTemplateSensor):
+    """Representation of a Checkwatt Spot Price sensor."""
+
+    def __init__(
+        self, coordinator: CheckwattCoordinator, use_detailed_attributes
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(
+            coordinator=coordinator, use_detailed_attributes=use_detailed_attributes
+        )
+        self._last_updated: datetime.datetime | None = None
+        self._attr_icon = ICON_SPOT_PRICE_VAT
+        self._attr_unique_id = (
+            f'checkwattUid_spot_price_vat_{self._coordinator.data["id"]}'
+        )
+        self._attr_name = f"Spot Price VAT {self._device_name}"
+        self._attr_device_class = SensorDeviceClass.MONETARY
+        self._attr_state_class = SensorStateClass.TOTAL
+        self._attr_native_unit_of_measurement = "SEK/kWh"
+        self._attr_available = False
+
+    async def async_update(self) -> None:
+        """Get the latest data and updates the states."""
+        _LOGGER.debug("Spot Price VAT update")
+        self._attr_available = True
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Get the latest data and updates the states."""
+        _LOGGER.debug("Spot Price VAT update via coordinator")
+        self._attr_native_value = round(self._coordinator.data["spot_price"] * 1.25, 3)
+        super()._handle_coordinator_update()
+
+    @property
+    def native_value(self) -> str | None:
+        """Get the latest state value."""
+        return round(self._coordinator.data["spot_price"] * 1.25, 3)
