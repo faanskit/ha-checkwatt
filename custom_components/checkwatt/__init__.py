@@ -12,7 +12,12 @@ from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util.dt import now
 
-from .const import CONF_DETAILED_SENSORS, CONF_UPDATE_INTERVAL, DOMAIN
+from .const import (
+    CONF_DETAILED_SENSORS,
+    CONF_UPDATE_INTERVAL,
+    CONF_UPDATE_INTERVAL_FCRD,
+    DOMAIN,
+)
 from .pycheckwatt import CheckwattManager
 
 _LOGGER = logging.getLogger(__name__)
@@ -83,6 +88,9 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
             update_interval=timedelta(minutes=CONF_UPDATE_INTERVAL),
         )
         self._entry = entry
+        self.update_monetary = 0
+        self.update_time = None
+        self.next_update_time = None
 
     @property
     def entry_id(self) -> str:
@@ -103,8 +111,18 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     raise InvalidAuth
                 if not await cw_inst.get_customer_details():
                     raise UpdateFailed("Unknown error get_customer_details")
-                if not await cw_inst.get_fcrd_revenue():
-                    raise UpdateFailed("Unknown error get_fcrd_revenue")
+
+                if self.update_monetary == 0:
+                    _LOGGER.debug("Fetching FCR-D data from checkwatt")
+                    self.update_time = now().strftime("%Y-%m-%d %H:%M:%S")
+                    end_date = now() + timedelta(minutes=CONF_UPDATE_INTERVAL_FCRD)
+                    self.next_update_time = end_date.strftime("%Y-%m-%d %H:%M:%S")
+                    self.update_monetary = CONF_UPDATE_INTERVAL_FCRD
+                    if not await cw_inst.get_fcrd_revenue():
+                        raise UpdateFailed("Unknown error get_fcrd_revenue")
+
+                self.update_monetary -= 1
+
                 if use_detailed_sensors:
                     if not await cw_inst.get_power_data():
                         raise UpdateFailed("Unknown error get_power_data")
@@ -112,10 +130,6 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                         raise UpdateFailed("Unknown error get_price_zone")
                     if not await cw_inst.get_spot_price():
                         raise UpdateFailed("Unknown error get_spot_price")
-
-                update_time = now().strftime("%Y-%m-%d %H:%M:%S")
-                end_date = now() + self.update_interval
-                next_update_time = end_date.strftime("%Y-%m-%d %H:%M:%S")
 
                 resp: CheckwattResp = {
                     "id": cw_inst.customer_details["Id"],
@@ -125,8 +139,8 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     "zip": cw_inst.customer_details["ZipCode"],
                     "city": cw_inst.customer_details["City"],
                     "display_name": cw_inst.customer_details["Meter"][0]["DisplayName"],
-                    "update_time": update_time,
-                    "next_update_time": next_update_time,
+                    "update_time": self.update_time,
+                    "next_update_time": self.next_update_time,
                     "revenue": cw_inst.today_revenue,
                     "tomorrow_revenue": round(cw_inst.tomorrow_revenue, 2),
                     "fcr_d_status": cw_inst.fcrd_state,
