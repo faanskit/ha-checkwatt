@@ -91,6 +91,8 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
         self.update_monetary = 0
         self.update_time = None
         self.next_update_time = None
+        self.cw_revenue = None
+        self.cw_revenue_tomorrow = None
 
     @property
     def entry_id(self) -> str:
@@ -120,6 +122,8 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     self.update_monetary = CONF_UPDATE_INTERVAL_FCRD
                     if not await cw_inst.get_fcrd_revenue():
                         raise UpdateFailed("Unknown error get_fcrd_revenue")
+                    self.cw_revenue = cw_inst.today_revenue
+                    self.cw_revenue_tomorrow = round(cw_inst.tomorrow_revenue, 2)
 
                 self.update_monetary -= 1
 
@@ -141,12 +145,16 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     "display_name": cw_inst.customer_details["Meter"][0]["DisplayName"],
                     "update_time": self.update_time,
                     "next_update_time": self.next_update_time,
-                    "revenue": cw_inst.today_revenue,
-                    "tomorrow_revenue": round(cw_inst.tomorrow_revenue, 2),
                     "fcr_d_status": cw_inst.fcrd_state,
                     "fcr_d_state": cw_inst.fcrd_percentage,
                     "fcr_d_date": cw_inst.fcrd_timestamp,
                 }
+
+                # Use self stored variant of revenue parameters as they are not always fetched
+                if self.cw_revenue is not None:
+                    resp["revenue"] = self.cw_revenue
+                    resp["tomorrow_revenue"] = self.cw_revenue_tomorrow
+
                 if use_detailed_sensors:
                     resp["total_solar_energy"] = cw_inst.total_solar_energy
                     resp["total_charging_energy"] = cw_inst.total_charging_energy
