@@ -133,29 +133,46 @@ class CheckwattSensor(CheckwattTemplateSensor):
         self._attr_state_class = SensorStateClass.TOTAL
         self._attr_native_unit_of_measurement = "SEK"
 
-        self._attr_extra_state_attributes = {
-            C_ADR: self._coordinator.data["address"],
-            C_ZIP: self._coordinator.data["zip"],
-            C_CITY: self._coordinator.data["city"],
-            C_TOMORROW: self._coordinator.data["tomorrow_revenue"],
-        }
+        self._attr_extra_state_attributes = {}
+        if "address" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_ADR: self._coordinator.data["address"]}
+            )
+        if "zip" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_ZIP: self._coordinator.data["zip"]}
+            )
+        if "city" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_CITY: self._coordinator.data["city"]}
+            )
+        if "tomorrow_revenue" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_TOMORROW: self._coordinator.data["tomorrow_revenue"]}
+            )
+
         if use_detailed_attributes:
             # Add extra attributes as required
-            self._attr_extra_state_attributes.update(
-                {C_UPDATE_TIME: self._coordinator.data["update_time"]}
-            )
-            self._attr_extra_state_attributes.update(
-                {C_NEXT_UPDATE_TIME: self._coordinator.data["next_update_time"]}
-            )
-            self._attr_extra_state_attributes.update(
-                {C_FCRD_STATUS: self._coordinator.data["fcr_d_status"]}
-            )
-            self._attr_extra_state_attributes.update(
-                {C_FCRD_STATE: self._coordinator.data["fcr_d_state"]}
-            )
-            self._attr_extra_state_attributes.update(
-                {C_FCRD_DATE: self._coordinator.data["fcr_d_date"]}
-            )
+            if "update_time" in self._coordinator.data:
+                self._attr_extra_state_attributes.update(
+                    {C_UPDATE_TIME: self._coordinator.data["update_time"]}
+                )
+            if "next_update_time" in self._coordinator.data:
+                self._attr_extra_state_attributes.update(
+                    {C_NEXT_UPDATE_TIME: self._coordinator.data["next_update_time"]}
+                )
+            if "fcr_d_status" in self._coordinator.data:
+                self._attr_extra_state_attributes.update(
+                    {C_FCRD_STATUS: self._coordinator.data["fcr_d_status"]}
+                )
+            if "fcr_d_state" in self._coordinator.data:
+                self._attr_extra_state_attributes.update(
+                    {C_FCRD_STATE: self._coordinator.data["fcr_d_state"]}
+                )
+            if "fcr_d_date" in self._coordinator.data:
+                self._attr_extra_state_attributes.update(
+                    {C_FCRD_DATE: self._coordinator.data["fcr_d_date"]}
+                )
 
         self._attr_available = False
 
@@ -170,36 +187,45 @@ class CheckwattSensor(CheckwattTemplateSensor):
         _LOGGER.debug("Updating sensor values (_handle_coordinator_update)")
 
         # Update the native value
-        self._attr_native_value = self._coordinator.data["revenue"]
+        if "revenue" in self._coordinator.data:
+            self._attr_native_value = self._coordinator.data["revenue"]
 
         # Update the normal attributes
-        self._attr_extra_state_attributes[C_TOMORROW] = self._coordinator.data[
-            "tomorrow_revenue"
-        ]
+        if "tomorrow_revenue" in self._coordinator.data:
+            self._attr_extra_state_attributes[C_TOMORROW] = self._coordinator.data[
+                "tomorrow_revenue"
+            ]
 
         # Update the extra attributes
         if self.use_detailed_attributes:
-            self._attr_extra_state_attributes.update(
-                {C_UPDATE_TIME: self._coordinator.data["update_time"]}
-            )
-            self._attr_extra_state_attributes.update(
-                {C_NEXT_UPDATE_TIME: self._coordinator.data["next_update_time"]}
-            )
-            self._attr_extra_state_attributes.update(
-                {C_FCRD_STATUS: self._coordinator.data["fcr_d_status"]}
-            )
-            self._attr_extra_state_attributes.update(
-                {C_FCRD_STATE: self._coordinator.data["fcr_d_state"]}
-            )
-            self._attr_extra_state_attributes.update(
-                {C_FCRD_DATE: self._coordinator.data["fcr_d_date"]}
-            )
+            if "update_time" in self._coordinator.data:
+                self._attr_extra_state_attributes.update(
+                    {C_UPDATE_TIME: self._coordinator.data["update_time"]}
+                )
+            if "next_update_time" in self._coordinator.data:
+                self._attr_extra_state_attributes.update(
+                    {C_NEXT_UPDATE_TIME: self._coordinator.data["next_update_time"]}
+                )
+            if "fcr_d_status" in self._coordinator.data:
+                self._attr_extra_state_attributes.update(
+                    {C_FCRD_STATUS: self._coordinator.data["fcr_d_status"]}
+                )
+            if "fcr_d_state" in self._coordinator.data:
+                self._attr_extra_state_attributes.update(
+                    {C_FCRD_STATE: self._coordinator.data["fcr_d_state"]}
+                )
+            if "fcr_d_date" in self._coordinator.data:
+                self._attr_extra_state_attributes.update(
+                    {C_FCRD_DATE: self._coordinator.data["fcr_d_date"]}
+                )
         super()._handle_coordinator_update()
 
     @property
     def native_value(self) -> str | None:
         """Get the latest state value."""
-        return self._coordinator.data["revenue"]
+        if "revenue" in self._coordinator.data:
+            return self._coordinator.data["revenue"]
+        return None
 
 
 class CheckwattSolarSensor(CheckwattTemplateSensor):
