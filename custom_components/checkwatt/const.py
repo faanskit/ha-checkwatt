@@ -3,7 +3,11 @@ from typing import Final
 
 DOMAIN = "checkwatt"
 CONF_MONITORED_SITES = "monitored_sites"
-CONF_UPDATE_INTERVAL = 15
+
+# Update interval for regular sensors is once every minute
+# For FCR-D since it is slow and resource consuming, is set to once per 15 minute
+CONF_UPDATE_INTERVAL = 1
+CONF_UPDATE_INTERVAL_FCRD = 15
 ATTRIBUTION = "Data provided by Checkwwatt EnergyInBalance"
 MANUFACTURER = "Checkwatt"
 
@@ -14,7 +18,7 @@ CONF_DETAILED_ATTRIBUTES: Final = "show_detailed_attributes"
 # Misc
 P_UNKNOWN = "Unknown"
 
-# Plant Sensor Attributes
+# Checkwatt Sensor Attributes
 CHECKWATT_MODEL = "Checkwatt"
 C_ADR = "Street Address"
 C_ZIP = "Zip Code"
