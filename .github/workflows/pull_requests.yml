@@ -28,7 +28,10 @@ jobs:
           auto_fix: false
           black: true
           flake8: true
-
+      
+      - name: "Hassfest"
+        uses: "home-assistant/actions/hassfest@master"
+      
   validate:
     name: "Validate hacs"
     runs-on: "ubuntu-latest"
