@@ -20,7 +20,9 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from . import CheckwattCoordinator, CheckwattResp
 from .const import (
     C_ADR,
+    C_CHARGE_PEAK,
     C_CITY,
+    C_DISCHARGE_PEAK,
     C_FCRD_DATE,
     C_FCRD_STATE,
     C_FCRD_STATUS,
@@ -173,6 +175,14 @@ class CheckwattSensor(CheckwattTemplateSensor):
                 self._attr_extra_state_attributes.update(
                     {C_FCRD_DATE: self._coordinator.data["fcr_d_date"]}
                 )
+            if "battery_charge_peak" in self._coordinator.data:
+                self._attr_extra_state_attributes.update(
+                    {C_CHARGE_PEAK: self._coordinator.data["battery_charge_peak"]}
+                )
+            if "battery_discharge_peak" in self._coordinator.data:
+                self._attr_extra_state_attributes.update(
+                    {C_DISCHARGE_PEAK: self._coordinator.data["battery_discharge_peak"]}
+                )
 
         self._attr_available = False
 
@@ -217,6 +227,14 @@ class CheckwattSensor(CheckwattTemplateSensor):
             if "fcr_d_date" in self._coordinator.data:
                 self._attr_extra_state_attributes.update(
                     {C_FCRD_DATE: self._coordinator.data["fcr_d_date"]}
+                )
+            if "battery_charge_peak" in self._coordinator.data:
+                self._attr_extra_state_attributes.update(
+                    {C_CHARGE_PEAK: self._coordinator.data["battery_charge_peak"]}
+                )
+            if "battery_discharge_peak" in self._coordinator.data:
+                self._attr_extra_state_attributes.update(
+                    {C_DISCHARGE_PEAK: self._coordinator.data["battery_discharge_peak"]}
                 )
         super()._handle_coordinator_update()
 

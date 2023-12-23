@@ -36,6 +36,8 @@ class CheckwattResp(TypedDict):
     city: str
     display_name: str
     revenue: float
+    battery_charge_peak: float
+    battery_discharge_peak: float
     tomorrow_revenue: float
     update_time: str
     next_update_time: str
@@ -152,6 +154,8 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     "fcr_d_status": cw_inst.fcrd_state,
                     "fcr_d_state": cw_inst.fcrd_percentage,
                     "fcr_d_date": cw_inst.fcrd_timestamp,
+                    "battery_charge_peak": cw_inst.battery_charge_peak,
+                    "battery_discharge_peak": cw_inst.battery_discharge_peak,
                 }
 
                 # Use self stored variant of revenue parameters as they are not always fetched
