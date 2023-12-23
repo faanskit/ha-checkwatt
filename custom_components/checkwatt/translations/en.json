@@ -23,8 +23,8 @@
         "step": {
             "init": {
                 "data": {
-                    "show_details": "Create detailed sensors",
-                    "show_detailed_attributes": "Created detailed attributes"
+                    "show_details": "Provide energy sensors",
+                    "show_detailed_attributes": "Offer detailed attributes"
                 },
                 "description": "Select options",
                 "title": "Checkwatt"
