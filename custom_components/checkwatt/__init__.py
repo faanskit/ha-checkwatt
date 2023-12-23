@@ -122,8 +122,12 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     self.update_monetary = CONF_UPDATE_INTERVAL_FCRD
                     if not await cw_inst.get_fcrd_revenue():
                         raise UpdateFailed("Unknown error get_fcrd_revenue")
-                    self.cw_revenue = cw_inst.today_revenue
-                    self.cw_revenue_tomorrow = round(cw_inst.tomorrow_revenue, 2)
+                    today_revenue, today_fees = cw_inst.today_revenue
+                    tomorrow_revenue, tomorrow_fees = cw_inst.tomorrow_revenue
+                    self.cw_revenue = today_revenue - today_fees
+                    self.cw_revenue_tomorrow = round(
+                        tomorrow_revenue - tomorrow_fees, 2
+                    )
 
                 self.update_monetary -= 1
 
