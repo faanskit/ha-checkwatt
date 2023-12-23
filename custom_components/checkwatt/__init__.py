@@ -36,9 +36,11 @@ class CheckwattResp(TypedDict):
     city: str
     display_name: str
     revenue: float
+    fees: float
     battery_charge_peak: float
     battery_discharge_peak: float
     tomorrow_revenue: float
+    tomorrow_fees: float
     update_time: str
     next_update_time: str
     fcr_d_status: str
@@ -50,6 +52,7 @@ class CheckwattResp(TypedDict):
     total_import_energy: float
     total_export_energy: float
     spot_price: float
+    price_zone: str
 
 
 async def update_listener(hass: HomeAssistant, entry):
@@ -93,8 +96,10 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
         self.update_monetary = 0
         self.update_time = None
         self.next_update_time = None
-        self.cw_revenue = None
-        self.cw_revenue_tomorrow = None
+        self.today_revenue = None
+        self.today_fees = None
+        self.tomorrow_revenue = None
+        self.tomorrow_fees = None
 
     @property
     def entry_id(self) -> str:
@@ -124,12 +129,8 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     self.update_monetary = CONF_UPDATE_INTERVAL_FCRD
                     if not await cw_inst.get_fcrd_revenue():
                         raise UpdateFailed("Unknown error get_fcrd_revenue")
-                    today_revenue, today_fees = cw_inst.today_revenue
-                    tomorrow_revenue, tomorrow_fees = cw_inst.tomorrow_revenue
-                    self.cw_revenue = today_revenue - today_fees
-                    self.cw_revenue_tomorrow = round(
-                        tomorrow_revenue - tomorrow_fees, 2
-                    )
+                    self.today_revenue, self.today_fees = cw_inst.today_revenue
+                    self.tomorrow_revenue, self.tomorrow_fees = cw_inst.tomorrow_revenue
 
                 self.update_monetary -= 1
 
@@ -159,9 +160,11 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                 }
 
                 # Use self stored variant of revenue parameters as they are not always fetched
-                if self.cw_revenue is not None:
-                    resp["revenue"] = self.cw_revenue
-                    resp["tomorrow_revenue"] = self.cw_revenue_tomorrow
+                if self.today_revenue is not None:
+                    resp["revenue"] = self.today_revenue
+                    resp["fees"] = self.today_fees
+                    resp["tomorrow_revenue"] = self.tomorrow_revenue
+                    resp["tomorrow_fees"] = self.tomorrow_fees
 
                 if use_detailed_sensors:
                     resp["total_solar_energy"] = cw_inst.total_solar_energy
@@ -171,6 +174,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     resp["total_export_energy"] = cw_inst.total_export_energy
                     time_hour = int(now().strftime("%H"))
                     resp["spot_price"] = cw_inst.get_spot_price_excl_vat(time_hour)
+                    resp["price_zone"] = cw_inst.price_zone
 
                 return resp
 

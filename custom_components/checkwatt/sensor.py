@@ -27,8 +27,16 @@ from .const import (
     C_FCRD_STATE,
     C_FCRD_STATUS,
     C_NEXT_UPDATE_TIME,
-    C_TOMORROW,
+    C_PRICE_ZONE,
+    C_TODAY_FEE_RATE,
+    C_TODAY_FEES,
+    C_TODAY_GROSS,
+    C_TOMORROW_FEE_RATE,
+    C_TOMORROW_FEES,
+    C_TOMORROW_GROSS,
+    C_TOMORROW_NET,
     C_UPDATE_TIME,
+    C_VAT,
     C_ZIP,
     CHECKWATT_MODEL,
     CONF_DETAILED_ATTRIBUTES,
@@ -148,10 +156,34 @@ class CheckwattSensor(CheckwattTemplateSensor):
             self._attr_extra_state_attributes.update(
                 {C_CITY: self._coordinator.data["city"]}
             )
-        if "tomorrow_revenue" in self._coordinator.data:
-            self._attr_extra_state_attributes.update(
-                {C_TOMORROW: self._coordinator.data["tomorrow_revenue"]}
+        if "revenue" in self._coordinator.data and "fees" in self._coordinator.data:
+            revenue = self._coordinator.data["revenue"]
+            fees = self._coordinator.data["fees"]
+            if self.use_detailed_attributes:  # Only show these at detailed attribues
+                self._attr_extra_state_attributes[C_TODAY_GROSS] = round(revenue, 2)
+                self._attr_extra_state_attributes[C_TODAY_FEES] = round(fees, 2)
+                self._attr_extra_state_attributes[
+                    C_TODAY_FEE_RATE
+                ] = f"{round((fees / revenue) * 100, 2)} %"
+        if (
+            "tomorrow_revenue" in self._coordinator.data
+            and "tomorrow_fees" in self._coordinator.data
+        ):
+            tomorrow_revenue = self._coordinator.data["tomorrow_revenue"]
+            tomorrow_fees = self._coordinator.data["tomorrow_fees"]
+            self._attr_extra_state_attributes[C_TOMORROW_NET] = round(
+                (tomorrow_revenue - tomorrow_fees), 2
             )
+            if self.use_detailed_attributes:  # Only show these at detailed attribues
+                self._attr_extra_state_attributes[C_TOMORROW_GROSS] = round(
+                    tomorrow_revenue, 2
+                )
+                self._attr_extra_state_attributes[C_TOMORROW_FEES] = round(
+                    tomorrow_fees, 2
+                )
+                self._attr_extra_state_attributes[
+                    C_TOMORROW_FEE_RATE
+                ] = f"{round((tomorrow_fees / tomorrow_revenue) * 100, 2 )} %"
 
         if use_detailed_attributes:
             # Add extra attributes as required
@@ -197,14 +229,37 @@ class CheckwattSensor(CheckwattTemplateSensor):
         _LOGGER.debug("Updating sensor values (_handle_coordinator_update)")
 
         # Update the native value
-        if "revenue" in self._coordinator.data:
-            self._attr_native_value = self._coordinator.data["revenue"]
+        if "revenue" in self._coordinator.data and "fees" in self._coordinator.data:
+            revenue = self._coordinator.data["revenue"]
+            fees = self._coordinator.data["fees"]
+            self._attr_native_value = round((revenue - fees), 2)
+            if self.use_detailed_attributes:  # Only show these at detailed attribues
+                self._attr_extra_state_attributes[C_TODAY_GROSS] = round(revenue, 2)
+                self._attr_extra_state_attributes[C_TODAY_FEES] = round(fees, 2)
+                self._attr_extra_state_attributes[
+                    C_TODAY_FEE_RATE
+                ] = f"{round((fees / revenue) * 100, 2)} %"
 
         # Update the normal attributes
-        if "tomorrow_revenue" in self._coordinator.data:
-            self._attr_extra_state_attributes[C_TOMORROW] = self._coordinator.data[
-                "tomorrow_revenue"
-            ]
+        if (
+            "tomorrow_revenue" in self._coordinator.data
+            and "tomorrow_fees" in self._coordinator.data
+        ):
+            tomorrow_revenue = self._coordinator.data["tomorrow_revenue"]
+            tomorrow_fees = self._coordinator.data["tomorrow_fees"]
+            self._attr_extra_state_attributes[C_TOMORROW_NET] = round(
+                (tomorrow_revenue - tomorrow_fees), 2
+            )
+            if self.use_detailed_attributes:  # Only show these at detailed attribues
+                self._attr_extra_state_attributes[C_TOMORROW_GROSS] = round(
+                    tomorrow_revenue, 2
+                )
+                self._attr_extra_state_attributes[C_TOMORROW_FEES] = round(
+                    tomorrow_fees, 2
+                )
+                self._attr_extra_state_attributes[
+                    C_TOMORROW_FEE_RATE
+                ] = f"{round((tomorrow_fees / tomorrow_revenue) * 100, 2)} %"
 
         # Update the extra attributes
         if self.use_detailed_attributes:
@@ -241,8 +296,10 @@ class CheckwattSensor(CheckwattTemplateSensor):
     @property
     def native_value(self) -> str | None:
         """Get the latest state value."""
-        if "revenue" in self._coordinator.data:
-            return self._coordinator.data["revenue"]
+        if "revenue" in self._coordinator.data and "fees" in self._coordinator.data:
+            return round(
+                self._coordinator.data["revenue"] - self._coordinator.data["fees"], 2
+            )
         return None
 
 
@@ -461,10 +518,15 @@ class CheckwattSpotPriceSensor(CheckwattTemplateSensor):
         self._attr_state_class = SensorStateClass.TOTAL
         self._attr_native_unit_of_measurement = "SEK/kWh"
         self._attr_available = False
+        self._attr_extra_state_attributes = {}
 
     async def async_update(self) -> None:
         """Get the latest data and updates the states."""
         _LOGGER.debug("Spot Price update")
+        if "price_zone" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_PRICE_ZONE: self._coordinator.data["price_zone"]}
+            )
         self._attr_available = True
 
     @callback
@@ -500,10 +562,16 @@ class CheckwattSpotPriceVATSensor(CheckwattTemplateSensor):
         self._attr_state_class = SensorStateClass.TOTAL
         self._attr_native_unit_of_measurement = "SEK/kWh"
         self._attr_available = False
+        self._attr_extra_state_attributes = {}
 
     async def async_update(self) -> None:
         """Get the latest data and updates the states."""
         _LOGGER.debug("Spot Price VAT update")
+        if "price_zone" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_PRICE_ZONE: self._coordinator.data["price_zone"]}
+            )
+            self._attr_extra_state_attributes.update({C_VAT: "25%"})
         self._attr_available = True
 
     @callback
