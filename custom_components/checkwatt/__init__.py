@@ -10,7 +10,7 @@ from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from homeassistant.util.dt import now
+from homeassistant.util import dt as dt_util
 
 from .const import (
     CONF_DETAILED_SENSORS,
@@ -53,6 +53,8 @@ class CheckwattResp(TypedDict):
     total_export_energy: float
     spot_price: float
     price_zone: str
+    annual_revenue: float
+    annual_fees: float
 
 
 async def update_listener(hass: HomeAssistant, entry):
@@ -100,6 +102,9 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
         self.today_fees = None
         self.tomorrow_revenue = None
         self.tomorrow_fees = None
+        self.annual_revenue = None
+        self.annual_fees = None
+        self.last_annual_update = None
 
     @property
     def entry_id(self) -> str:
@@ -123,14 +128,25 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
 
                 if self.update_monetary == 0:
                     _LOGGER.debug("Fetching FCR-D data from checkwatt")
-                    self.update_time = now().strftime("%Y-%m-%d %H:%M:%S")
-                    end_date = now() + timedelta(minutes=CONF_UPDATE_INTERVAL_FCRD)
+                    self.update_time = dt_util.now().strftime("%Y-%m-%d %H:%M:%S")
+                    end_date = dt_util.now() + timedelta(
+                        minutes=CONF_UPDATE_INTERVAL_FCRD
+                    )
                     self.next_update_time = end_date.strftime("%Y-%m-%d %H:%M:%S")
                     self.update_monetary = CONF_UPDATE_INTERVAL_FCRD
                     if not await cw_inst.get_fcrd_revenue():
                         raise UpdateFailed("Unknown error get_fcrd_revenue")
                     self.today_revenue, self.today_fees = cw_inst.today_revenue
                     self.tomorrow_revenue, self.tomorrow_fees = cw_inst.tomorrow_revenue
+
+                if self.last_annual_update is None or dt_util.start_of_local_day(
+                    dt_util.now()
+                ) != dt_util.start_of_local_day(self.last_annual_update):
+                    _LOGGER.debug("Fetching annual revenue")
+                    self.last_annual_update = dt_util.now()
+                    if not await cw_inst.get_fcrd_revenueyear():
+                        raise UpdateFailed("Unknown error get_fcrd_revenueyear")
+                    self.annual_revenue, self.annual_fees = cw_inst.year_revenue
 
                 self.update_monetary -= 1
 
@@ -166,13 +182,17 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     resp["tomorrow_revenue"] = self.tomorrow_revenue
                     resp["tomorrow_fees"] = self.tomorrow_fees
 
+                if self.annual_revenue is not None:
+                    resp["annual_revenue"] = self.annual_revenue
+                    resp["annual_fees"] = self.annual_fees
+
                 if use_detailed_sensors:
                     resp["total_solar_energy"] = cw_inst.total_solar_energy
                     resp["total_charging_energy"] = cw_inst.total_charging_energy
                     resp["total_discharging_energy"] = cw_inst.total_discharging_energy
                     resp["total_import_energy"] = cw_inst.total_import_energy
                     resp["total_export_energy"] = cw_inst.total_export_energy
-                    time_hour = int(now().strftime("%H"))
+                    time_hour = int(dt_util.now().strftime("%H"))
                     resp["spot_price"] = cw_inst.get_spot_price_excl_vat(time_hour)
                     resp["price_zone"] = cw_inst.price_zone
 

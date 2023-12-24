@@ -27,10 +27,14 @@ C_TOMORROW_GROSS = "Tomorrow Gross Income"
 C_TOMORROW_FEES = "Tomorrow Fees"
 C_TOMORROW_FEE_RATE = "Tomorrow Fee Rate"
 C_TOMORROW_NET = "Tomorrow Net Income"
-
 C_TODAY_GROSS = "Today Gross Income"
 C_TODAY_FEES = "Today Fees"
 C_TODAY_FEE_RATE = "Today Fee Rate"
+C_ANNUAL_GROSS = "Annual Gross Income"
+C_ANNUAL_FEES = "Annual Fees"
+C_ANNUAL_FEE_RATE = "Annual Fee Rate"
+
+
 C_UPDATE_TIME = "Last update"
 C_NEXT_UPDATE_TIME = "Next update"
 C_FCRD_STATUS = "FCR-D Status"
