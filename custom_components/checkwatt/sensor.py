@@ -20,6 +20,9 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from . import CheckwattCoordinator, CheckwattResp
 from .const import (
     C_ADR,
+    C_ANNUAL_FEE_RATE,
+    C_ANNUAL_FEES,
+    C_ANNUAL_GROSS,
     C_CHARGE_PEAK,
     C_CITY,
     C_DISCHARGE_PEAK,
@@ -46,6 +49,7 @@ from .const import (
 )
 
 ICON_CASH = "mdi:account-cash"
+ICON_CASH_ANNUAL = "mdi:account-cash-outline"
 ICON_SOLAR_PANEL = "mdi:solar-power-variant-outline"
 ICON_BATTERY_CHARGE = "mdi:home-battery"
 ICON_BATTERY_DISCHARGE = "mdi:home-battery-outline"
@@ -71,6 +75,7 @@ async def async_setup_entry(
 
     _LOGGER.debug("Setting up Checkwatt sensor for %s", checkwatt_data["display_name"])
     entities.append(CheckwattSensor(coordinator, use_detailed_attributes))
+    entities.append(CheckwattAnnualSensor(coordinator, use_detailed_attributes))
 
     if use_detailed_sensors:
         _LOGGER.debug(
@@ -225,9 +230,6 @@ class CheckwattSensor(CheckwattTemplateSensor):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Get the latest data and updates the states."""
-
-        _LOGGER.debug("Updating sensor values (_handle_coordinator_update)")
-
         # Update the native value
         if "revenue" in self._coordinator.data and "fees" in self._coordinator.data:
             revenue = self._coordinator.data["revenue"]
@@ -303,6 +305,100 @@ class CheckwattSensor(CheckwattTemplateSensor):
         return None
 
 
+class CheckwattAnnualSensor(CheckwattTemplateSensor):
+    """Representation of a Checkwatt Annual Revenue sensor."""
+
+    def __init__(
+        self, coordinator: CheckwattCoordinator, use_detailed_attributes
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(
+            coordinator=coordinator, use_detailed_attributes=use_detailed_attributes
+        )
+        self._last_updated: datetime.datetime | None = None
+        self._attr_icon = ICON_CASH_ANNUAL
+        self._attr_unique_id = f'checkwattUid_Annual_{self._coordinator.data["id"]}'
+        self._attr_name = f"Checkwatt Annual {self._device_name}"
+        self._attr_device_class = SensorDeviceClass.MONETARY
+        self._attr_state_class = SensorStateClass.TOTAL
+        self._attr_native_unit_of_measurement = "SEK"
+
+        self._attr_extra_state_attributes = {}
+        if "address" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_ADR: self._coordinator.data["address"]}
+            )
+        if "zip" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_ZIP: self._coordinator.data["zip"]}
+            )
+        if "city" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_CITY: self._coordinator.data["city"]}
+            )
+        if self.use_detailed_attributes:  # Only show these at detailed attribues
+            if (
+                "annual_revenue" in self._coordinator.data
+                and "annual_fees" in self._coordinator.data
+            ):
+                annual_revenue = self._coordinator.data["annual_revenue"]
+                annual_fees = self._coordinator.data["annual_fees"]
+                if (
+                    self.use_detailed_attributes
+                ):  # Only show these at detailed attribues
+                    self._attr_extra_state_attributes[C_ANNUAL_GROSS] = round(
+                        annual_revenue, 2
+                    )
+                    self._attr_extra_state_attributes[C_ANNUAL_FEES] = round(
+                        annual_fees, 2
+                    )
+                    self._attr_extra_state_attributes[
+                        C_ANNUAL_FEE_RATE
+                    ] = f"{round((annual_fees / annual_revenue) * 100, 2)} %"
+
+        self._attr_available = False
+
+    async def async_update(self) -> None:
+        """Get the latest data and updates the states."""
+        self._attr_available = True
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Get the latest data and updates the states."""
+        # Update the native value
+        if (
+            "annual_revenue" in self._coordinator.data
+            and "annual_fees" in self._coordinator.data
+        ):
+            annual_revenue = self._coordinator.data["annual_revenue"]
+            annual_fees = self._coordinator.data["annual_fees"]
+            self._attr_native_value = round((annual_revenue - annual_fees), 2)
+            if self.use_detailed_attributes:  # Only show these at detailed attribues
+                self._attr_extra_state_attributes[C_ANNUAL_GROSS] = round(
+                    annual_revenue, 2
+                )
+                self._attr_extra_state_attributes[C_ANNUAL_FEES] = round(annual_fees, 2)
+                self._attr_extra_state_attributes[
+                    C_ANNUAL_FEE_RATE
+                ] = f"{round((annual_fees / annual_revenue) * 100, 2)} %"
+
+        super()._handle_coordinator_update()
+
+    @property
+    def native_value(self) -> str | None:
+        """Get the latest state value."""
+        if (
+            "annual_revenue" in self._coordinator.data
+            and "annual_fees" in self._coordinator.data
+        ):
+            return round(
+                self._coordinator.data["annual_revenue"]
+                - self._coordinator.data["annual_fees"],
+                2,
+            )
+        return None
+
+
 class CheckwattSolarSensor(CheckwattTemplateSensor):
     """Representation of a Checkwatt Solar sensor."""
 
@@ -324,13 +420,11 @@ class CheckwattSolarSensor(CheckwattTemplateSensor):
 
     async def async_update(self) -> None:
         """Get the latest data and updates the states."""
-        _LOGGER.debug("Solar panel energy update")
         self._attr_available = True
 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Get the latest data and updates the states."""
-        _LOGGER.debug("Solar panel energy update via coordinator")
         self._attr_native_value = round(
             self._coordinator.data["total_solar_energy"] / 1000, 2
         )
@@ -363,13 +457,11 @@ class CheckwattBatteryChargingSensor(CheckwattTemplateSensor):
 
     async def async_update(self) -> None:
         """Get the latest data and updates the states."""
-        _LOGGER.debug("Battery charging energy update")
         self._attr_available = True
 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Get the latest data and updates the states."""
-        _LOGGER.debug("Battery charging energy update via coordinator")
         self._attr_native_value = round(
             self._coordinator.data["total_charging_energy"] / 1000, 2
         )
@@ -404,13 +496,11 @@ class CheckwattBatteryDischargingSensor(CheckwattTemplateSensor):
 
     async def async_update(self) -> None:
         """Get the latest data and updates the states."""
-        _LOGGER.debug("Battery discharging energy update")
         self._attr_available = True
 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Get the latest data and updates the states."""
-        _LOGGER.debug("Battery discharging energy update via coordinator")
         self._attr_native_value = round(
             self._coordinator.data["total_discharging_energy"] / 1000, 2
         )
@@ -443,13 +533,11 @@ class CheckwattImportEnergySensor(CheckwattTemplateSensor):
 
     async def async_update(self) -> None:
         """Get the latest data and updates the states."""
-        _LOGGER.debug("Import energy update")
         self._attr_available = True
 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Get the latest data and updates the states."""
-        _LOGGER.debug("Import energy update via coordinator")
         self._attr_native_value = round(
             self._coordinator.data["total_import_energy"] / 1000, 2
         )
@@ -482,13 +570,11 @@ class CheckwattExportEnergySensor(CheckwattTemplateSensor):
 
     async def async_update(self) -> None:
         """Get the latest data and updates the states."""
-        _LOGGER.debug("Export energy update")
         self._attr_available = True
 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Get the latest data and updates the states."""
-        _LOGGER.debug("Export energy update via coordinator")
         self._attr_native_value = round(
             self._coordinator.data["total_export_energy"] / 1000, 2
         )
@@ -522,7 +608,6 @@ class CheckwattSpotPriceSensor(CheckwattTemplateSensor):
 
     async def async_update(self) -> None:
         """Get the latest data and updates the states."""
-        _LOGGER.debug("Spot Price update")
         if "price_zone" in self._coordinator.data:
             self._attr_extra_state_attributes.update(
                 {C_PRICE_ZONE: self._coordinator.data["price_zone"]}
@@ -532,7 +617,6 @@ class CheckwattSpotPriceSensor(CheckwattTemplateSensor):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Get the latest data and updates the states."""
-        _LOGGER.debug("Spot Price update via coordinator")
         self._attr_native_value = round(self._coordinator.data["spot_price"], 3)
         super()._handle_coordinator_update()
 
@@ -566,7 +650,6 @@ class CheckwattSpotPriceVATSensor(CheckwattTemplateSensor):
 
     async def async_update(self) -> None:
         """Get the latest data and updates the states."""
-        _LOGGER.debug("Spot Price VAT update")
         if "price_zone" in self._coordinator.data:
             self._attr_extra_state_attributes.update(
                 {C_PRICE_ZONE: self._coordinator.data["price_zone"]}
@@ -577,7 +660,6 @@ class CheckwattSpotPriceVATSensor(CheckwattTemplateSensor):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Get the latest data and updates the states."""
-        _LOGGER.debug("Spot Price VAT update via coordinator")
         self._attr_native_value = round(self._coordinator.data["spot_price"] * 1.25, 3)
         super()._handle_coordinator_update()
 
