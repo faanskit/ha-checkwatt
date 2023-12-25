@@ -19,6 +19,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import CheckwattCoordinator, CheckwattResp
 from .const import (
+    ATTRIBUTION,
     C_ADR,
     C_ANNUAL_FEE_RATE,
     C_ANNUAL_FEES,
@@ -107,6 +108,9 @@ async def async_setup_entry(
 class CheckwattTemplateSensor(CoordinatorEntity[CheckwattCoordinator], SensorEntity):
     """Representation of a generic Checkwatt sensor."""
 
+    _attr_attribution = ATTRIBUTION
+    _attr_has_entity_name = True
+
     def __init__(
         self, coordinator: CheckwattCoordinator, use_detailed_attributes
     ) -> None:
@@ -167,9 +171,13 @@ class CheckwattSensor(CheckwattTemplateSensor):
             if self.use_detailed_attributes:  # Only show these at detailed attribues
                 self._attr_extra_state_attributes[C_TODAY_GROSS] = round(revenue, 2)
                 self._attr_extra_state_attributes[C_TODAY_FEES] = round(fees, 2)
-                self._attr_extra_state_attributes[
-                    C_TODAY_FEE_RATE
-                ] = f"{round((fees / revenue) * 100, 2)} %"
+                if revenue > 0:
+                    self._attr_extra_state_attributes[
+                        C_TODAY_FEE_RATE
+                    ] = f"{round((fees / revenue) * 100, 2)} %"
+                else:
+                    self._attr_extra_state_attributes[C_TODAY_FEE_RATE] = "N/A %"
+
         if (
             "tomorrow_revenue" in self._coordinator.data
             and "tomorrow_fees" in self._coordinator.data
@@ -186,9 +194,12 @@ class CheckwattSensor(CheckwattTemplateSensor):
                 self._attr_extra_state_attributes[C_TOMORROW_FEES] = round(
                     tomorrow_fees, 2
                 )
-                self._attr_extra_state_attributes[
-                    C_TOMORROW_FEE_RATE
-                ] = f"{round((tomorrow_fees / tomorrow_revenue) * 100, 2 )} %"
+                if tomorrow_revenue > 0:
+                    self._attr_extra_state_attributes[
+                        C_TOMORROW_FEE_RATE
+                    ] = f"{round((tomorrow_fees / tomorrow_revenue) * 100, 2 )} %"
+                else:
+                    self._attr_extra_state_attributes[C_TOMORROW_FEE_RATE] = "N/A %"
 
         if use_detailed_attributes:
             # Add extra attributes as required
@@ -238,9 +249,12 @@ class CheckwattSensor(CheckwattTemplateSensor):
             if self.use_detailed_attributes:  # Only show these at detailed attribues
                 self._attr_extra_state_attributes[C_TODAY_GROSS] = round(revenue, 2)
                 self._attr_extra_state_attributes[C_TODAY_FEES] = round(fees, 2)
-                self._attr_extra_state_attributes[
-                    C_TODAY_FEE_RATE
-                ] = f"{round((fees / revenue) * 100, 2)} %"
+                if revenue > 0:
+                    self._attr_extra_state_attributes[
+                        C_TODAY_FEE_RATE
+                    ] = f"{round((fees / revenue) * 100, 2)} %"
+                else:
+                    self._attr_extra_state_attributes[C_TODAY_FEE_RATE] = "N/A %"
 
         # Update the normal attributes
         if (
@@ -259,9 +273,12 @@ class CheckwattSensor(CheckwattTemplateSensor):
                 self._attr_extra_state_attributes[C_TOMORROW_FEES] = round(
                     tomorrow_fees, 2
                 )
-                self._attr_extra_state_attributes[
-                    C_TOMORROW_FEE_RATE
-                ] = f"{round((tomorrow_fees / tomorrow_revenue) * 100, 2)} %"
+                if revenue > 0:
+                    self._attr_extra_state_attributes[
+                        C_TOMORROW_FEE_RATE
+                    ] = f"{round((tomorrow_fees / tomorrow_revenue) * 100, 2)} %"
+                else:
+                    self._attr_extra_state_attributes[C_TOMORROW_FEE_RATE] = "N/A %"
 
         # Update the extra attributes
         if self.use_detailed_attributes:

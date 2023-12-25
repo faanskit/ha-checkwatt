@@ -1,7 +1,7 @@
 """The Checkwatt integration."""
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import time, timedelta
 import logging
 from typing import TypedDict
 
@@ -139,14 +139,16 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     self.today_revenue, self.today_fees = cw_inst.today_revenue
                     self.tomorrow_revenue, self.tomorrow_fees = cw_inst.tomorrow_revenue
 
-                if self.last_annual_update is None or dt_util.start_of_local_day(
-                    dt_util.now()
-                ) != dt_util.start_of_local_day(self.last_annual_update):
+                if self.last_annual_update is None or (
+                    dt_util.now().time() >= time(3, 0)  # Wait until 3am
+                    and dt_util.start_of_local_day(dt_util.now())
+                    != dt_util.start_of_local_day(self.last_annual_update)
+                ):
                     _LOGGER.debug("Fetching annual revenue")
-                    self.last_annual_update = dt_util.now()
                     if not await cw_inst.get_fcrd_revenueyear():
                         raise UpdateFailed("Unknown error get_fcrd_revenueyear")
                     self.annual_revenue, self.annual_fees = cw_inst.year_revenue
+                    self.last_annual_update = dt_util.now()
 
                 self.update_monetary -= 1
 
