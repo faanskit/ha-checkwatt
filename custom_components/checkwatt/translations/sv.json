@@ -34,10 +34,83 @@
     "entity": {
         "sensor": {
             "daily_yield_sensor": {
-                "name": "Checkwatt Daglig Intäkt"
+                "name": "Checkwatt Daglig Intäkt",
+                "state_attributes": {
+                    "Street Address": {
+                        "name": "Address"
+                    },
+                    "Zip Code": {
+                        "name": "Postnummer"
+                    },
+                    "City": {
+                        "name": "Stad"
+                    },
+                    "Today Gross Income": {
+                        "name": "Dagens Bruttoinkomst"
+                    },
+                    "Today Fees": {
+                        "name": "Dagens Avgifter"
+                    },
+                    "Today Fee Rate": {
+                        "name": "Dagens Avgiftssats"
+                    },
+                    "Tomorrow Net Income": {
+                        "name": "Morgondagens Nettointäkt"
+                    },
+                    "Tomorrow Gross Income": {
+                        "name": "Morgondagens Bruttoinkomst"
+                    },
+                    "Tomorrow Fees": {
+                        "name": "Morgondagens Avgifter"
+                    },
+                    "Tomorrow Fee Rate": {
+                        "name": "Morgondagens Avgiftssats"
+                    },
+                    "Last update": {
+                        "name": "Senaste uppdateringen"
+                    },
+                    "Next update": {
+                        "name": "Nästa uppdatering"
+                    },
+                    "FCR-D State": {
+                        "name": "FCR-D State"
+                    },
+                    "FCR-D Status": {
+                        "name": "FCR-D Status"
+                    },
+                    "FCR-D Date": {
+                        "name": "FCR-D Datum"
+                    },
+                    "Charge Peak": {
+                        "name": "Laddningstopp"
+                    },
+                    "Discharge Peak": {
+                        "name": "Urladdningstopp"
+                    }
+                }
             },
             "annual_yield_sensor": {
-                "name": "Checkwatt Årlig Intäkt"
+                "name": "Checkwatt Årlig Intäkt",
+                "state_attributes": {
+                    "Street Address": {
+                        "name": "Address"
+                    },
+                    "Zip Code": {
+                        "name": "Postnummer"
+                    },
+                    "City": {
+                        "name": "Stad"
+                    },
+                    "Annual Gross Income": {
+                        "name": "Årets Bruttoinkomst"
+                    },
+                    "Annual Fees": {
+                        "name": "Årets Avgifter"
+                    },
+                    "Annual Fee Rate": {
+                        "name": "Årets Avgiftssats"
+                    }
+                }
             },
             "solar_sensor": {
                 "name": "Solenergi"
@@ -55,10 +128,23 @@
                 "name": "Exporterad Energi"
             },
             "spot_price_sensor": {
-                "name": "Spotpris"
+                "name": "Spotpris",
+                "state_attributes": {
+                    "Price zone": {
+                        "name": "Elprisområde"
+                    }
+                }
             },
             "spot_price_vat_sensor": {
-                "name": "Spotpris inkl. moms"
+                "name": "Spotpris inkl. moms",
+                "state_attributes": {
+                    "Price zone": {
+                        "name": "Elprisområde"
+                    },
+                    "VAT": {
+                        "name": "Moms"
+                    }
+                }
             }
         }
     }

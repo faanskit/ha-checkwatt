@@ -34,10 +34,83 @@
     "entity": {
         "sensor": {
             "daily_yield_sensor": {
-                "name": "Checkwatt Daily Yield"
+                "name": "Checkwatt Daily Yield",
+                "state_attributes": {
+                    "Street Address": {
+                        "name": "Street Address"
+                    },
+                    "Zip Code": {
+                        "name": "Zip Code"
+                    },
+                    "City": {
+                        "name": "City"
+                    },
+                    "Today Gross Income": {
+                        "name": "Today Gross Income"
+                    },
+                    "Today Fees": {
+                        "name": "Today Fees"
+                    },
+                    "Today Fee Rate": {
+                        "name": "Today Fee Rate"
+                    },
+                    "Tomorrow Net Income": {
+                        "name": "Tomorrow Net Income"
+                    },
+                    "Tomorrow Gross Income": {
+                        "name": "Tomorrow Gross Income"
+                    },
+                    "Tomorrow Fees": {
+                        "name": "Tomorrow Fees"
+                    },
+                    "Tomorrow Fee Rate": {
+                        "name": "Tomorrow Fee Rate"
+                    },
+                    "Last update": {
+                        "name": "Last update"
+                    },
+                    "Next update": {
+                        "name": "Next update"
+                    },
+                    "FCR-D State": {
+                        "name": "FCR-D State"
+                    },
+                    "FCR-D Status": {
+                        "name": "FCR-D Status"
+                    },
+                    "FCR-D Date": {
+                        "name": "FCR-D Date"
+                    },
+                    "Charge Peak": {
+                        "name": "Charge Peak"
+                    },
+                    "Discharge Peak": {
+                        "name": "Discharge Peak"
+                    }
+                }
             },
             "annual_yield_sensor": {
-                "name": "Checkwatt Annual Yield"
+                "name": "Checkwatt Annual Yield",
+                "state_attributes": {
+                    "Street Address": {
+                        "name": "Street Address"
+                    },
+                    "Zip Code": {
+                        "name": "Zip Code"
+                    },
+                    "City": {
+                        "name": "City"
+                    },
+                    "Annual Gross Income": {
+                        "name": "Annual Gross Income"
+                    },
+                    "Annual Fees": {
+                        "name": "Annual Fees"
+                    },
+                    "Annual Fee Rate": {
+                        "name": "Annual Fee Rate"
+                    }
+                }
             },
             "solar_sensor": {
                 "name": "Solar Energy"
@@ -55,10 +128,23 @@
                 "name": "Export Energy"
             },
             "spot_price_sensor": {
-                "name": "Spot Price"
+                "name": "Spot Price",
+                "state_attributes": {
+                    "Price zone": {
+                        "name": "Price zone"
+                    }
+                }
             },
             "spot_price_vat_sensor": {
-                "name": "Spot Price VAT"
+                "name": "Spot Price VAT",
+                "state_attributes": {
+                    "Price zone": {
+                        "name": "Price zone"
+                    },
+                    "VAT": {
+                        "name": "VAT"
+                    }
+                }
             }
         }
     }
