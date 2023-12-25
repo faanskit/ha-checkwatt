@@ -30,5 +30,36 @@
                 "title": "Checkwatt"
             }
         }
+    },
+    "entity": {
+        "sensor": {
+            "daily_yield_sensor": {
+                "name": "Checkwatt Daily Yield"
+            },
+            "annual_yield_sensor": {
+                "name": "Checkwatt Annual Yield"
+            },
+            "solar_sensor": {
+                "name": "Solar Energy"
+            },
+            "charging_sensor": {
+                "name": "Battery Charging Energy"
+            },
+            "discharging_sensor": {
+                "name": "Battery Discharging Energy"
+            },
+            "import_sensor": {
+                "name": "Import Energy"
+            },
+            "export_sensor": {
+                "name": "Export Energy"
+            },
+            "spot_price_sensor": {
+                "name": "Spot Price"
+            },
+            "spot_price_vat_sensor": {
+                "name": "Spot Price VAT"
+            }
+        }
     }
 }

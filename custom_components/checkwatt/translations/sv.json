@@ -30,5 +30,36 @@
                 "title": "Checkwatt"
             }
         }
+    },
+    "entity": {
+        "sensor": {
+            "daily_yield_sensor": {
+                "name": "Checkwatt Daglig Intäkt"
+            },
+            "annual_yield_sensor": {
+                "name": "Checkwatt Årlig Intäkt"
+            },
+            "solar_sensor": {
+                "name": "Solenergi"
+            },
+            "charging_sensor": {
+                "name": "Batteri Laddning Energi"
+            },
+            "discharging_sensor": {
+                "name": "Batteri Urladdning Energi"
+            },
+            "import_sensor": {
+                "name": "Importerad Energi"
+            },
+            "export_sensor": {
+                "name": "Exporterad Energi"
+            },
+            "spot_price_sensor": {
+                "name": "Spotpris"
+            },
+            "spot_price_vat_sensor": {
+                "name": "Spotpris inkl. moms"
+            }
+        }
     }
 }
