@@ -1,5 +1,5 @@
-# Home Assistant Checkwatt Custom Integration
-This integration uses cloud polling from the Checkwatt portal using a reverse engineered private API.
+# Home Assistant CheckWatt Custom Integration
+This integration uses cloud polling from the CheckWatt EnergyInbalance portal using a reverse engineered private API.
 
 # Installation
 ### HACS - NOT AVAILABLE - NEED UPDATE
@@ -34,7 +34,7 @@ Go to Settings / Devices & Services / Integrations. Click **+ ADD INTERATION**
 ## Configuration
 If you need more sensor and more detailed attributes in the sensors, you can configure the integration as follows
 
-Go to Settings / Devices & Services / Checkwatt. Click **CONFIGURE**.
+Go to Settings / Devices & Services / CheckWatt. Click **CONFIGURE**.
 
 Select if you want additional sensors.
 
