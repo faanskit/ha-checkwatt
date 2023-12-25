@@ -30,5 +30,122 @@
                 "title": "Checkwatt"
             }
         }
+    },
+    "entity": {
+        "sensor": {
+            "daily_yield_sensor": {
+                "name": "Checkwatt Daglig Intäkt",
+                "state_attributes": {
+                    "street_address": {
+                        "name": "Address"
+                    },
+                    "zip_code": {
+                        "name": "Postnummer"
+                    },
+                    "city": {
+                        "name": "Stad"
+                    },
+                    "today_gross_income": {
+                        "name": "Dagens Bruttoinkomst"
+                    },
+                    "today_fees": {
+                        "name": "Dagens Avgifter"
+                    },
+                    "today_fees_rate": {
+                        "name": "Dagens Avgiftssats"
+                    },
+                    "tomorrow_net_income": {
+                        "name": "Morgondagens Nettointäkt"
+                    },
+                    "tomorrow_gross_income": {
+                        "name": "Morgondagens Bruttoinkomst"
+                    },
+                    "tomorrow_fees": {
+                        "name": "Morgondagens Avgifter"
+                    },
+                    "tomorrow_fee_rate": {
+                        "name": "Morgondagens Avgiftssats"
+                    },
+                    "last_update": {
+                        "name": "Senaste uppdateringen"
+                    },
+                    "next_update": {
+                        "name": "Nästa uppdatering"
+                    },
+                    "fcr_d_state": {
+                        "name": "FCR-D State"
+                    },
+                    "fcr_d_status": {
+                        "name": "FCR-D Status"
+                    },
+                    "fcr_d_date": {
+                        "name": "FCR-D Datum"
+                    },
+                    "charge_peak": {
+                        "name": "Laddningstopp"
+                    },
+                    "discharge_peak": {
+                        "name": "Urladdningstopp"
+                    }
+                }
+            },
+            "annual_yield_sensor": {
+                "name": "Checkwatt Årlig Intäkt",
+                "state_attributes": {
+                    "street_address": {
+                        "name": "Address"
+                    },
+                    "zip_code": {
+                        "name": "Postnummer"
+                    },
+                    "city": {
+                        "name": "Stad"
+                    },
+                    "annual_gross_income": {
+                        "name": "Årets Bruttoinkomst"
+                    },
+                    "annual_fees": {
+                        "name": "Årets Avgifter"
+                    },
+                    "annual_fee_rate": {
+                        "name": "Årets Avgiftssats"
+                    }
+                }
+            },
+            "solar_sensor": {
+                "name": "Solenergi"
+            },
+            "charging_sensor": {
+                "name": "Batteri Laddning Energi"
+            },
+            "discharging_sensor": {
+                "name": "Batteri Urladdning Energi"
+            },
+            "import_sensor": {
+                "name": "Importerad Energi"
+            },
+            "export_sensor": {
+                "name": "Exporterad Energi"
+            },
+            "spot_price_sensor": {
+                "name": "Spotpris",
+                "state_attributes": {
+                    "prize_zone": {
+                        "name": "Elprisområde"
+                    }
+                }
+            },
+            "spot_price_vat_sensor": {
+                "name": "Spotpris inkl. moms",
+                "state_attributes": {
+                    "prize_zone": {
+                        "name": "Elprisområde"
+                    },
+                    "vat": {
+                        "name": "Moms"
+                    }
+                }
+            }
+        }
     }
 }

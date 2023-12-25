@@ -30,5 +30,122 @@
                 "title": "Checkwatt"
             }
         }
+    },
+    "entity": {
+        "sensor": {
+            "daily_yield_sensor": {
+                "name": "Checkwatt Daily Yield",
+                "state_attributes": {
+                    "street_address": {
+                        "name": "Street Address"
+                    },
+                    "zip_code": {
+                        "name": "Zip Code"
+                    },
+                    "city": {
+                        "name": "City"
+                    },
+                    "today_gross_income": {
+                        "name": "Today Gross Income"
+                    },
+                    "today_fees": {
+                        "name": "Today Fees"
+                    },
+                    "today_fees_rate": {
+                        "name": "Today Fee Rate"
+                    },
+                    "tomorrow_net_income": {
+                        "name": "Tomorrow Net Income"
+                    },
+                    "tomorrow_gross_income": {
+                        "name": "Tomorrow Gross Income"
+                    },
+                    "tomorrow_fees": {
+                        "name": "Tomorrow Fees"
+                    },
+                    "tomorrow_fee_rate": {
+                        "name": "Tomorrow Fee Rate"
+                    },
+                    "last_update": {
+                        "name": "Last update"
+                    },
+                    "next_update": {
+                        "name": "Next update"
+                    },
+                    "fcr_d_state": {
+                        "name": "FCR-D State"
+                    },
+                    "fcr_d_status": {
+                        "name": "FCR-D Status"
+                    },
+                    "fcr_d_date": {
+                        "name": "FCR-D Date"
+                    },
+                    "charge_peak": {
+                        "name": "Charge Peak"
+                    },
+                    "discharge_peak": {
+                        "name": "Discharge Peak"
+                    }
+                }
+            },
+            "annual_yield_sensor": {
+                "name": "Checkwatt Annual Yield",
+                "state_attributes": {
+                    "street_address": {
+                        "name": "Street Address"
+                    },
+                    "zip_code": {
+                        "name": "Zip Code"
+                    },
+                    "city": {
+                        "name": "City"
+                    },
+                    "annual_gross_income": {
+                        "name": "Annual Gross Income"
+                    },
+                    "annual_fees": {
+                        "name": "Annual Fees"
+                    },
+                    "annual_fee_rate": {
+                        "name": "Annual Fee Rate"
+                    }
+                }
+            },
+            "solar_sensor": {
+                "name": "Solar Energy"
+            },
+            "charging_sensor": {
+                "name": "Battery Charging Energy"
+            },
+            "discharging_sensor": {
+                "name": "Battery Discharging Energy"
+            },
+            "import_sensor": {
+                "name": "Import Energy"
+            },
+            "export_sensor": {
+                "name": "Export Energy"
+            },
+            "spot_price_sensor": {
+                "name": "Spot Price",
+                "state_attributes": {
+                    "prize_zone": {
+                        "name": "Price zone"
+                    }
+                }
+            },
+            "spot_price_vat_sensor": {
+                "name": "Spot Price VAT",
+                "state_attributes": {
+                    "prize_zone": {
+                        "name": "Price zone"
+                    },
+                    "vat": {
+                        "name": "VAT"
+                    }
+                }
+            }
+        }
     }
 }

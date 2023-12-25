@@ -99,6 +99,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(title=CONF_TITLE, data=user_input)
 
+        tmp = self.config_entry.sensors.get("annual_yield")
+
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
