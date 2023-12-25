@@ -181,7 +181,7 @@ class CheckwattSensor(CheckwattTemplateSensor):
         self._last_updated: datetime.datetime | None = None
         self._attr_icon = ICON_CASH
         self._attr_unique_id = f'checkwattUid_{self._coordinator.data["id"]}'
-        self._attr_name = f"Checkwatt {self._device_name}"
+        self._attr_name = f"Checkwatt {self._device_name} Today"
         self._attr_device_class = SensorDeviceClass.MONETARY
         self._attr_state_class = SensorStateClass.TOTAL
         self._attr_native_unit_of_measurement = "SEK"
@@ -369,7 +369,7 @@ class CheckwattAnnualSensor(CheckwattTemplateSensor):
         self._last_updated: datetime.datetime | None = None
         self._attr_icon = ICON_CASH_ANNUAL
         self._attr_unique_id = f'checkwattUid_Annual_{self._coordinator.data["id"]}'
-        self._attr_name = f"Checkwatt Annual {self._device_name}"
+        self._attr_name = f"Checkwatt {self._device_name} Annual"
         self._attr_device_class = SensorDeviceClass.MONETARY
         self._attr_state_class = SensorStateClass.TOTAL
         self._attr_native_unit_of_measurement = "SEK"
