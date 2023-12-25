@@ -6,12 +6,12 @@
                 "username": "Username",
                 "password": "Password"
                 },
-                "description": "Please enter the username and password for your Checkwatt account",
-                "title":"Checkwatt"
+                "description": "Please enter the username and password for your CheckWatt EnergyInBalance account",
+                "title":"CheckWatt"
             }
         },
         "error": {
-            "cannot_connect": "Cannot connect to Checkwatt",
+            "cannot_connect": "Cannot connect to CheckWatt",
             "invalid_auth": "Failed to authorize",
             "unknown": "Unknown error"
         },
@@ -27,14 +27,14 @@
                     "show_detailed_attributes": "Offer detailed attributes"
                 },
                 "description": "Select options",
-                "title": "Checkwatt"
+                "title": "CheckWatt"
             }
         }
     },
     "entity": {
         "sensor": {
             "daily_yield_sensor": {
-                "name": "Checkwatt Daily Yield",
+                "name": "CheckWatt Daily Yield",
                 "state_attributes": {
                     "street_address": {
                         "name": "Street Address"
@@ -90,7 +90,7 @@
                 }
             },
             "annual_yield_sensor": {
-                "name": "Checkwatt Annual Yield",
+                "name": "CheckWatt Annual Yield",
                 "state_attributes": {
                     "street_address": {
                         "name": "Street Address"
