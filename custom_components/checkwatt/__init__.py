@@ -1,4 +1,4 @@
-"""The Checkwatt integration."""
+"""The CheckWatt integration."""
 from __future__ import annotations
 
 from datetime import time, timedelta
@@ -65,7 +65,7 @@ async def update_listener(hass: HomeAssistant, entry):
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up Checkwatt from a config entry."""
+    """Set up CheckWatt from a config entry."""
     coordinator = CheckwattCoordinator(hass, entry)
     await coordinator.async_config_entry_first_refresh()
 
@@ -126,7 +126,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     raise UpdateFailed("Unknown error get_customer_details")
 
                 if self.update_monetary == 0:
-                    _LOGGER.debug("Fetching FCR-D data from checkwatt")
+                    _LOGGER.debug("Fetching FCR-D data from CheckWatt")
                     self.update_time = dt_util.now().strftime("%Y-%m-%d %H:%M:%S")
                     end_date = dt_util.now() + timedelta(
                         minutes=CONF_UPDATE_INTERVAL_FCRD
