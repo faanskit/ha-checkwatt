@@ -118,7 +118,6 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
             username = self._entry.data.get(CONF_USERNAME)
             password = self._entry.data.get(CONF_PASSWORD)
             use_detailed_sensors = self._entry.options.get(CONF_DETAILED_SENSORS)
-            _LOGGER.debug("Fetching data from checkwatt")
 
             async with CheckwattManager(username, password) as cw_inst:
                 if not await cw_inst.login():
