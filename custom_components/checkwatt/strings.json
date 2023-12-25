@@ -36,55 +36,55 @@
             "daily_yield_sensor": {
                 "name": "Checkwatt Daily Yield",
                 "state_attributes": {
-                    "Street Address": {
+                    "street_address": {
                         "name": "Street Address"
                     },
-                    "Zip Code": {
+                    "zip_code": {
                         "name": "Zip Code"
                     },
-                    "City": {
+                    "city": {
                         "name": "City"
                     },
-                    "Today Gross Income": {
+                    "today_gross_income": {
                         "name": "Today Gross Income"
                     },
-                    "Today Fees": {
+                    "today_fees": {
                         "name": "Today Fees"
                     },
-                    "Today Fee Rate": {
+                    "today_fees_rate": {
                         "name": "Today Fee Rate"
                     },
-                    "Tomorrow Net Income": {
+                    "tomorrow_net_income": {
                         "name": "Tomorrow Net Income"
                     },
-                    "Tomorrow Gross Income": {
+                    "tomorrow_gross_income": {
                         "name": "Tomorrow Gross Income"
                     },
-                    "Tomorrow Fees": {
+                    "tomorrow_fees": {
                         "name": "Tomorrow Fees"
                     },
-                    "Tomorrow Fee Rate": {
+                    "tomorrow_fee_rate": {
                         "name": "Tomorrow Fee Rate"
                     },
-                    "Last update": {
+                    "last_update": {
                         "name": "Last update"
                     },
-                    "Next update": {
+                    "next_update": {
                         "name": "Next update"
                     },
-                    "FCR-D State": {
+                    "fcr_d_state": {
                         "name": "FCR-D State"
                     },
-                    "FCR-D Status": {
+                    "fcr_d_status": {
                         "name": "FCR-D Status"
                     },
-                    "FCR-D Date": {
+                    "fcr_d_date": {
                         "name": "FCR-D Date"
                     },
-                    "Charge Peak": {
+                    "charge_peak": {
                         "name": "Charge Peak"
                     },
-                    "Discharge Peak": {
+                    "discharge_peak": {
                         "name": "Discharge Peak"
                     }
                 }
@@ -92,22 +92,22 @@
             "annual_yield_sensor": {
                 "name": "Checkwatt Annual Yield",
                 "state_attributes": {
-                    "Street Address": {
+                    "street_address": {
                         "name": "Street Address"
                     },
-                    "Zip Code": {
+                    "zip_code": {
                         "name": "Zip Code"
                     },
-                    "City": {
+                    "city": {
                         "name": "City"
                     },
-                    "Annual Gross Income": {
+                    "annual_gross_income": {
                         "name": "Annual Gross Income"
                     },
-                    "Annual Fees": {
+                    "annual_fees": {
                         "name": "Annual Fees"
                     },
-                    "Annual Fee Rate": {
+                    "annual_fee_rate": {
                         "name": "Annual Fee Rate"
                     }
                 }
@@ -130,7 +130,7 @@
             "spot_price_sensor": {
                 "name": "Spot Price",
                 "state_attributes": {
-                    "Price zone": {
+                    "prize_zone": {
                         "name": "Price zone"
                     }
                 }
@@ -138,10 +138,10 @@
             "spot_price_vat_sensor": {
                 "name": "Spot Price VAT",
                 "state_attributes": {
-                    "Price zone": {
+                    "prize_zone": {
                         "name": "Price zone"
                     },
-                    "VAT": {
+                    "vat": {
                         "name": "VAT"
                     }
                 }

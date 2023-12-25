@@ -36,55 +36,55 @@
             "daily_yield_sensor": {
                 "name": "Checkwatt Daglig Intäkt",
                 "state_attributes": {
-                    "Street Address": {
+                    "street_address": {
                         "name": "Address"
                     },
-                    "Zip Code": {
+                    "zip_code": {
                         "name": "Postnummer"
                     },
-                    "City": {
+                    "city": {
                         "name": "Stad"
                     },
-                    "Today Gross Income": {
+                    "today_gross_income": {
                         "name": "Dagens Bruttoinkomst"
                     },
-                    "Today Fees": {
+                    "today_fees": {
                         "name": "Dagens Avgifter"
                     },
-                    "Today Fee Rate": {
+                    "today_fees_rate": {
                         "name": "Dagens Avgiftssats"
                     },
-                    "Tomorrow Net Income": {
+                    "tomorrow_net_income": {
                         "name": "Morgondagens Nettointäkt"
                     },
-                    "Tomorrow Gross Income": {
+                    "tomorrow_gross_income": {
                         "name": "Morgondagens Bruttoinkomst"
                     },
-                    "Tomorrow Fees": {
+                    "tomorrow_fees": {
                         "name": "Morgondagens Avgifter"
                     },
-                    "Tomorrow Fee Rate": {
+                    "tomorrow_fee_rate": {
                         "name": "Morgondagens Avgiftssats"
                     },
-                    "Last update": {
+                    "last_update": {
                         "name": "Senaste uppdateringen"
                     },
-                    "Next update": {
+                    "next_update": {
                         "name": "Nästa uppdatering"
                     },
-                    "FCR-D State": {
+                    "fcr_d_state": {
                         "name": "FCR-D State"
                     },
-                    "FCR-D Status": {
+                    "fcr_d_status": {
                         "name": "FCR-D Status"
                     },
-                    "FCR-D Date": {
+                    "fcr_d_date": {
                         "name": "FCR-D Datum"
                     },
-                    "Charge Peak": {
+                    "charge_peak": {
                         "name": "Laddningstopp"
                     },
-                    "Discharge Peak": {
+                    "discharge_peak": {
                         "name": "Urladdningstopp"
                     }
                 }
@@ -92,22 +92,22 @@
             "annual_yield_sensor": {
                 "name": "Checkwatt Årlig Intäkt",
                 "state_attributes": {
-                    "Street Address": {
+                    "street_address": {
                         "name": "Address"
                     },
-                    "Zip Code": {
+                    "zip_code": {
                         "name": "Postnummer"
                     },
-                    "City": {
+                    "city": {
                         "name": "Stad"
                     },
-                    "Annual Gross Income": {
+                    "annual_gross_income": {
                         "name": "Årets Bruttoinkomst"
                     },
-                    "Annual Fees": {
+                    "annual_fees": {
                         "name": "Årets Avgifter"
                     },
-                    "Annual Fee Rate": {
+                    "annual_fee_rate": {
                         "name": "Årets Avgiftssats"
                     }
                 }
@@ -130,7 +130,7 @@
             "spot_price_sensor": {
                 "name": "Spotpris",
                 "state_attributes": {
-                    "Price zone": {
+                    "prize_zone": {
                         "name": "Elprisområde"
                     }
                 }
@@ -138,10 +138,10 @@
             "spot_price_vat_sensor": {
                 "name": "Spotpris inkl. moms",
                 "state_attributes": {
-                    "Price zone": {
+                    "prize_zone": {
                         "name": "Elprisområde"
                     },
-                    "VAT": {
+                    "vat": {
                         "name": "Moms"
                     }
                 }
