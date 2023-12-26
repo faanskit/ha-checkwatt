@@ -1,5 +1,5 @@
 {
-    "name": "Checkwatt",
+    "name": "CheckWatt",
     "homeassistant": "2022.11.1",
     "render_readme": true,
     "country": ["ALL"]

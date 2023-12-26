@@ -1,4 +1,4 @@
-"""Support for Checkwatt sensors."""
+"""Support for CheckWatt sensors."""
 from __future__ import annotations
 
 from datetime import timedelta
@@ -56,7 +56,7 @@ _LOGGER = logging.getLogger(__name__)
 CHECKWATT_MONETARY_SENSORS: dict[str, SensorEntityDescription] = {
     "daily": SensorEntityDescription(
         key="daily_yield",
-        name="Checkwatt Daily Yield",
+        name="CheckWatt Daily Yield",
         icon="mdi:account-cash",
         device_class=SensorDeviceClass.MONETARY,
         native_unit_of_measurement="SEK",
@@ -65,7 +65,7 @@ CHECKWATT_MONETARY_SENSORS: dict[str, SensorEntityDescription] = {
     ),
     "annual": SensorEntityDescription(
         key="annual_yield",
-        name="Checkwatt Annual Yield",
+        name="CheckWatt Annual Yield",
         icon="mdi:account-cash-outline",
         device_class=SensorDeviceClass.MONETARY,
         native_unit_of_measurement="SEK",
@@ -148,14 +148,14 @@ CHECKWATT_SPOTPRICE_SENSORS: dict[str, SensorEntityDescription] = {
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    """Set up the Checkwatt sensor."""
+    """Set up the CheckWatt sensor."""
     coordinator: CheckwattCoordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[AbstractCheckwattSensor] = []
     checkwatt_data: CheckwattResp = coordinator.data
     use_detailed_sensors = entry.options.get(CONF_DETAILED_SENSORS)
     use_detailed_attributes = entry.options.get(CONF_DETAILED_ATTRIBUTES)
 
-    _LOGGER.debug("Setting up Checkwatt sensor for %s", checkwatt_data["display_name"])
+    _LOGGER.debug("Setting up CheckWatt sensor for %s", checkwatt_data["display_name"])
     for key, description in CHECKWATT_MONETARY_SENSORS.items():
         if key == "daily":
             entities.append(
@@ -168,7 +168,7 @@ async def async_setup_entry(
 
     if use_detailed_sensors:
         _LOGGER.debug(
-            "Setting up detailed Checkwatt sensors for %s",
+            "Setting up detailed CheckWatt sensors for %s",
             checkwatt_data["display_name"],
         )
         for data_key, description in CHECKWATT_ENERGY_SENSORS.items():
@@ -180,7 +180,7 @@ async def async_setup_entry(
 
 
 class AbstractCheckwattSensor(CoordinatorEntity[CheckwattCoordinator], SensorEntity):
-    """Abstract class for an Checkwatt sensor."""
+    """Abstract class for an CheckWatt sensor."""
 
     _attr_attribution = ATTRIBUTION
     _attr_has_entity_name = True
@@ -215,7 +215,7 @@ class AbstractCheckwattSensor(CoordinatorEntity[CheckwattCoordinator], SensorEnt
 
 
 class CheckwattSensor(AbstractCheckwattSensor):
-    """Representation of a Checkwatt sensor."""
+    """Representation of a CheckWatt sensor."""
 
     def __init__(
         self,
@@ -399,7 +399,7 @@ class CheckwattSensor(AbstractCheckwattSensor):
 
 
 class CheckwattAnnualSensor(AbstractCheckwattSensor):
-    """Representation of a Checkwatt Annual Revenue sensor."""
+    """Representation of a CheckWatt Annual Revenue sensor."""
 
     def __init__(
         self,
@@ -489,7 +489,7 @@ class CheckwattAnnualSensor(AbstractCheckwattSensor):
 
 
 class CheckwattEnergySensor(AbstractCheckwattSensor):
-    """Representation of a Checkwatt Energy sensor."""
+    """Representation of a CheckWatt Energy sensor."""
 
     def __init__(
         self,
@@ -519,7 +519,7 @@ class CheckwattEnergySensor(AbstractCheckwattSensor):
 
 
 class CheckwattSpotPriceSensor(AbstractCheckwattSensor):
-    """Representation of a Checkwatt Spot-price sensor."""
+    """Representation of a CheckWatt Spot-price sensor."""
 
     def __init__(
         self,
