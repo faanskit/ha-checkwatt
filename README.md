@@ -158,6 +158,8 @@ If you think that some of the attributes provided should be sensors, please cons
 
 ## Use templates
 This is an example of a Template based Sensor that pulls tomorrows planned daily yield from the attribute of the Checkwatt Daily Yield sensor.
+
+It goes without saying, but this should be put in your `configuration.yaml`:
 ```yaml
 template:
   - sensor:
@@ -168,6 +170,10 @@ template:
         device_class: "monetary"
         state_class: total
 ```
+The result will look something like this:
+
+![template based sensor](/images/expert_sensor.png)
+
 
 ## Use developer tools
 The names of the attributes can be found in the Home Assistant Developer Tools section in your Home Assistant environment under the **STATES** sheet:
