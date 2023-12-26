@@ -136,7 +136,7 @@ CHECKWATT_SPOTPRICE_SENSORS: dict[str, SensorEntityDescription] = {
     ),
     "inc_vat": SensorEntityDescription(
         key="spot_price_vat",
-        name="Spot Price VAT",
+        name="Spot Price incl. VAT",
         icon="mdi:chart-multiple",
         device_class=SensorDeviceClass.MONETARY,
         native_unit_of_measurement="SEK/kWh",
