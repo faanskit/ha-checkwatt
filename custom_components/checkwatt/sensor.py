@@ -400,7 +400,7 @@ class CheckwattSensor(AbstractCheckwattSensor):
 
 
 class CheckwattAnnualSensor(AbstractCheckwattSensor):
-    """Representation of a Checkwatt Annual Revenue sensor."""
+    """Representation of a CheckWatt Annual Revenue sensor."""
 
     def __init__(
         self,
