@@ -1,4 +1,4 @@
-"""Config flow for Checkwatt integration."""
+"""Config flow for CheckWatt integration."""
 from __future__ import annotations
 
 import logging
@@ -15,7 +15,7 @@ from homeassistant.exceptions import HomeAssistantError
 from .const import CONF_DETAILED_ATTRIBUTES, CONF_DETAILED_SENSORS, DOMAIN
 from .pycheckwatt import CheckwattManager
 
-CONF_TITLE = "Checkwatt"
+CONF_TITLE = "CheckWatt"
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 
 
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
-    """Validate that the user input allows us to connect to Checkwatt."""
+    """Validate that the user input allows us to connect to CheckWatt."""
     async with CheckwattManager(
         data[CONF_USERNAME], data[CONF_PASSWORD]
     ) as check_watt_instance:
@@ -37,7 +37,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Checkwatt."""
+    """Handle a config flow for CheckWatt."""
 
     VERSION = 1
 
@@ -86,7 +86,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class OptionsFlowHandler(config_entries.OptionsFlow):
-    """Handle a options flow for Checkwatt."""
+    """Handle a options flow for CheckWatt."""
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize options flow."""

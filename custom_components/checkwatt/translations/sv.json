@@ -6,8 +6,8 @@
                     "username": "Användarnamn",
                     "password": "Lösenord"
                 },
-                "description": "Ange namn och lösen till ditt Checkwatt konto",
-                "title":"Checkwatt"
+                "description": "Ange namn och lösen till ditt CheckWatt EnergyInBalance konto",
+                "title":"CheckWatt"
             }
         },
         "error": {
@@ -27,14 +27,14 @@
                     "show_detailed_attributes": "Visa detaljerade attribut"
                 },
                 "description": "Dina val",
-                "title": "Checkwatt"
+                "title": "CheckWatt"
             }
         }
     },
     "entity": {
         "sensor": {
             "daily_yield_sensor": {
-                "name": "Checkwatt Daglig Intäkt",
+                "name": "CheckWatt Daglig Intäkt",
                 "state_attributes": {
                     "street_address": {
                         "name": "Address"
@@ -90,10 +90,10 @@
                 }
             },
             "annual_yield_sensor": {
-                "name": "Checkwatt Årlig Intäkt",
+                "name": "CheckWatt Årets Intäkt",
                 "state_attributes": {
                     "street_address": {
-                        "name": "Address"
+                        "name": "Adress"
                     },
                     "zip_code": {
                         "name": "Postnummer"
