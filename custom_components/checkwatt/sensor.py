@@ -42,7 +42,7 @@ from .const import (
     C_UPDATE_TIME,
     C_VAT,
     C_ZIP,
-    ATT_MODEL,
+    CHECKWATT_MODEL,
     CONF_DETAILED_ATTRIBUTES,
     CONF_DETAILED_SENSORS,
     DOMAIN,
