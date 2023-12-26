@@ -49,17 +49,25 @@ Currently the process is quite technical, so basic understanding of software dev
 cd /workspaces/core/config
 mkdir custom_components
 mkdir software
-cd software
-git pull https://github.com/faanskit/ha-checkwatt.git
+
+cd /workspaces/core/config/software/
+mkdir ha-checkwatt
+mkdir pyCheckwatt
+
+cd /workspaces/core/config/software/pyCheckwatt
+git init
 git pull https://github.com/faanskit/pyCheckwatt.git
-cd ../custom_components
-ln -s ../software/ha-checkwatt/custom_components/checkwatt
-cd checkwatt
-ln -s ../../software/pyCheckwatt/pycheckwatt
+
+cd /workspaces/core/config/software/ha-checkwatt
+git init
+git pull https://github.com/faanskit/ha-checkwatt.git
+
+cd /workspaces/core/config/software/ha-checkwatt/custom_components/checkwatt
+ln -s ../../../pyCheckwatt/pycheckwatt .
 ```
 
 ## Enable the integration
-Go to Settings / Devices & Services / Integrations. Click **+ ADD INTERATION**
+Go to Settings / Devices & Services / Integrations. Click **+ ADD INTEGRATION**
 
 Find Checkwatt from the list of available brands:
 
