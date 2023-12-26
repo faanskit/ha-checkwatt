@@ -74,6 +74,7 @@ CHECKWATT_MONETARY_SENSORS: dict[str, SensorEntityDescription] = {
     ),
 }
 
+
 CHECKWATT_ENERGY_SENSORS: dict[str, SensorEntityDescription] = {
     "total_solar_energy": SensorEntityDescription(
         key="solar",
@@ -411,6 +412,8 @@ class CheckwattAnnualSensor(AbstractCheckwattSensor):
         super().__init__(coordinator=coordinator, description=description)
         self.use_detailed_attributes = use_detailed_attributes
         self._attr_unique_id = f'checkwattUid_Annual_{self._coordinator.data["id"]}'
+        self.total_annual_revenue = None
+        self.total_annual_fee = None
 
         self._attr_extra_state_attributes = {}
         if "address" in self._coordinator.data:
@@ -425,25 +428,41 @@ class CheckwattAnnualSensor(AbstractCheckwattSensor):
             self._attr_extra_state_attributes.update(
                 {C_CITY: self._coordinator.data["city"]}
             )
-        if self.use_detailed_attributes:  # Only show these at detailed attribues
-            if (
-                "annual_revenue" in self._coordinator.data
-                and "annual_fees" in self._coordinator.data
-            ):
-                annual_revenue = self._coordinator.data["annual_revenue"]
-                annual_fees = self._coordinator.data["annual_fees"]
-                if (
-                    self.use_detailed_attributes
-                ):  # Only show these at detailed attribues
-                    self._attr_extra_state_attributes[C_ANNUAL_GROSS] = round(
-                        annual_revenue, 2
-                    )
-                    self._attr_extra_state_attributes[C_ANNUAL_FEES] = round(
-                        annual_fees, 2
-                    )
-                    self._attr_extra_state_attributes[
-                        C_ANNUAL_FEE_RATE
-                    ] = f"{round((annual_fees / annual_revenue) * 100, 2)} %"
+        if (
+            "annual_revenue" in self._coordinator.data
+            and "annual_fees" in self._coordinator.data
+            and "revenue" in self._coordinator.data
+            and "fees" in self._coordinator.data
+            and "tomorrow_revenue" in self._coordinator.data
+            and "tomorrow_fees" in self._coordinator.data
+        ):
+            # Annual revenue does not contain today and tomorrow revenue
+            # and is only fetched once daily.
+            # To obtain Total Annual revenue, it needs to be calculated
+            annual_revenue = self._coordinator.data["annual_revenue"]
+            annual_fees = self._coordinator.data["annual_fees"]
+            today_revenue = self._coordinator.data["revenue"]
+            today_fees = self._coordinator.data["fees"]
+            tomorrow_revenue = self._coordinator.data["tomorrow_revenue"]
+            tomorrow_fees = self._coordinator.data["tomorrow_fees"]
+            self.total_annual_revenue = (
+                annual_revenue + today_revenue + tomorrow_revenue
+            )
+            self.total_annual_fee = annual_fees + today_fees + tomorrow_fees
+            self._attr_native_value = round(
+                (self.total_annual_revenue - self.total_annual_fee), 2
+            )
+
+            if self.use_detailed_attributes:  # Only show these at detailed attribues
+                self._attr_extra_state_attributes[C_ANNUAL_GROSS] = round(
+                    self.total_annual_revenue, 2
+                )
+                self._attr_extra_state_attributes[C_ANNUAL_FEES] = round(
+                    self.total_annual_fee, 2
+                )
+                self._attr_extra_state_attributes[
+                    C_ANNUAL_FEE_RATE
+                ] = f"{round((self.total_annual_fee / self.total_annual_revenue) * 100, 2)} %"
 
         self._attr_available = False
 
@@ -458,31 +477,49 @@ class CheckwattAnnualSensor(AbstractCheckwattSensor):
         if (
             "annual_revenue" in self._coordinator.data
             and "annual_fees" in self._coordinator.data
+            and "revenue" in self._coordinator.data
+            and "fees" in self._coordinator.data
+            and "tomorrow_revenue" in self._coordinator.data
+            and "tomorrow_fees" in self._coordinator.data
         ):
+            # Annual revenue does not contain today and tomorrow revenue
+            # and is only fetched once daily.
+            # To obtain Total Annual revenue, it needs to be calculated
             annual_revenue = self._coordinator.data["annual_revenue"]
             annual_fees = self._coordinator.data["annual_fees"]
-            self._attr_native_value = round((annual_revenue - annual_fees), 2)
+            today_revenue = self._coordinator.data["revenue"]
+            today_fees = self._coordinator.data["fees"]
+            tomorrow_revenue = self._coordinator.data["tomorrow_revenue"]
+            tomorrow_fees = self._coordinator.data["tomorrow_fees"]
+
+            self.total_annual_revenue = (
+                annual_revenue + today_revenue + tomorrow_revenue
+            )
+
+            self.total_annual_fee = annual_fees + today_fees + tomorrow_fees
+
+            self._attr_native_value = round(
+                (self.total_annual_revenue - self.total_annual_fee), 2
+            )
             if self.use_detailed_attributes:  # Only show these at detailed attribues
                 self._attr_extra_state_attributes[C_ANNUAL_GROSS] = round(
-                    annual_revenue, 2
+                    self.total_annual_revenue, 2
                 )
-                self._attr_extra_state_attributes[C_ANNUAL_FEES] = round(annual_fees, 2)
+                self._attr_extra_state_attributes[C_ANNUAL_FEES] = round(
+                    self.total_annual_fee, 2
+                )
                 self._attr_extra_state_attributes[
                     C_ANNUAL_FEE_RATE
-                ] = f"{round((annual_fees / annual_revenue) * 100, 2)} %"
+                ] = f"{round((self.total_annual_fee / self.total_annual_revenue) * 100, 2)} %"
 
         super()._handle_coordinator_update()
 
     @property
     def native_value(self) -> str | None:
         """Get the latest state value."""
-        if (
-            "annual_revenue" in self._coordinator.data
-            and "annual_fees" in self._coordinator.data
-        ):
+        if self.total_annual_revenue is not None and self.total_annual_fee is not None:
             return round(
-                self._coordinator.data["annual_revenue"]
-                - self._coordinator.data["annual_fees"],
+                self.total_annual_revenue - self.total_annual_fee,
                 2,
             )
         return None

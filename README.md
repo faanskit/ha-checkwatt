@@ -3,23 +3,23 @@ This integration uses cloud polling from the CheckWatt EnergyInbalance portal us
 
 The strategy for this integration is to reduce the amount of sensors published while at the same time maximize the information available and provide them as attributes.
 
-The integration also aims to balance the user needs for information with loads on Checkwatts servers why some data may not always be up-to date.
+The integration also aims to balance the user needs for information with loads on CheckWatts servers why some data may not always be up-to date.
 
 Out-of-the box, this integration provides two sensors:
-- Checkwatt Daily Yield : Your estimated yield today
-- Checkwatt Annual Yield : Your estimated annual yield
+- CheckWatt Daily Yield : Your estimated yield today
+- CheckWatt Annual Yield : Your estimated annual yield
 
 The Daily Yield sensor also have an attribute that provides information about tomorrows planned yield.
 
 ![checkwatt main](/images/ha_main.png)
 
 # Known Issues and Limitations
-1. The integration uses undocumented API's used by the Energy In Balance portal. These can change at any time and render this integration useless without any prior notice.
-2. The monetary information from Energy In Balance is always provisional and can change before you receive your invoice from Checkwatt.
+1. The integration uses undocumented API's used by the EnergyInBalance portal. These can change at any time and render this integration useless without any prior notice.
+2. The monetary information from EnergyInBalance is always provisional and can change before you receive your invoice from CheckWatt.
 3. The annual yeild sensor includes today's and tomorrow's planned yield.
-4. Checkwatt Energy In Balance does not (always) provide Grid In/Out information. why it is reccomended to use other data sources for your Energy Panel.
+4. CheckWatt EnergyInBalance does not (always) provide Grid In/Out information. why it is reccomended to use other data sources for your Energy Panel.
 5. The FCR-D state and status is pulled from a logbook parameter within the API and is a very fragile piece of information. Use with care.
-6. The integration will update the Energy sensors once per minute, the Daily Yield sensor once every fifteenth minute and the Annual Yield around 2 am every morning. This to not put too much stress on the Checkwatt servers (the yield operation is slow resource heavy)
+6. The integration will update the Energy sensors once per minute, the Daily Yield sensor once every fifteenth minute and the Annual Yield around 2 am every morning. This to not put too much stress on the CheckWatt servers (the yield operation is slow resource heavy)
 
 # Installation
 ### HACS installation - NOT AVAILABLE
@@ -69,11 +69,11 @@ ln -s ../../../pyCheckwatt/pycheckwatt .
 ## Enable the integration
 Go to Settings / Devices & Services / Integrations. Click **+ ADD INTEGRATION**
 
-Find Checkwatt from the list of available brands:
+Find CheckWatt from the list of available brands:
 
 ![checkwatt config step 1](/images/configure_step_1.png)
 
-Enter your Energy In Balance credentials and press **SUBMIT**:
+Enter your EnergyInBalance credentials and press **SUBMIT**:
 
 Take note that Home Assistant will store your credentials and if this is a security concern for you, abort at this stage.
 
@@ -96,7 +96,7 @@ The Daily Yield sensor will also show tomorrows planned yield as an attribute.
 
 
 ## Configuration
-The integration provides basic sensors for most peoples needs. The configuration can also be a one-stop-shop for the Home Assistant Energy panel and can therefore be configured to also fetch all required data for that from Energy In Balance.
+The integration provides basic sensors for most peoples needs. The integration can also be a one-stop-shop for the Home Assistant Energy panel and can therefore be configured to also fetch all required data for that from EnergyInBalance.
 
 For those who need additional information, detailed attributes can be provided by configuring the integration accordingly. Through the detailed sensors you can get gross revenue, fees, fee rates, FCR-D status and much more.
 
@@ -137,7 +137,7 @@ For the Grid Consumption, select the Import Energy sensor from the integration a
 
 For Grid Consumption, select the Export Energy sensor from the integration and complement it with the cost tracker using the *Spot Price* sensors.
 
-**Take note** that you should use the sensor that excludes VAT for Electricity that you sell. 
+**Take note** that you should use the sensor that excludes VAT for Electricity that you sell.
 
 ![checkwatt energy step 3](/images/energy_step_3.png)
 
@@ -145,7 +145,7 @@ When configured, it looks like this. Press **SAVE + NEXT** to continue the Wizar
 
 ![checkwatt energy step 4](/images/energy_step_4.png)
 
-Add the Solar Energy sensor from the integration and press **SAVE + NEXT** 
+Add the Solar Energy sensor from the integration and press **SAVE + NEXT**
 
 ![checkwatt energy step 5](/images/energy_step_5.png)
 
@@ -153,14 +153,14 @@ Add the Battery Energy sensors from the integration.
 *Energy going in to the battery* = Battery Charging Energy Sensor
 *Energy going out of the battery* = Battery Discharging Energy Sensor
 
- Press **SAVE + NEXT** 
+ Press **SAVE + NEXT**
 
 ![checkwatt energy step 6](/images/energy_step_6.png)
 
 Finish off the Wizard and the result will look like this.
 Please be advised that it will take a few hours before the Energy Panels start showing data.
 
-Also, currently Energy In Balance does not always provide proper Grid Input and Output why this data cannot be relied upon.
+Also, currently EnergyInBalance does not always provide proper Grid Input and Output why this data cannot be relied upon.
 
 For now, you need to pull that data from another integration.
 
@@ -177,13 +177,13 @@ The final result can look like this:
 If you think that some of the attributes provided should be sensors, please consider to use [Templates](https://www.home-assistant.io/docs/configuration/templating/) before you register it as an [issue](https://github.com/faanskit/ha-checkwatt/issues). If it can be done via a Template Sensor, it will most likely be rejected.
 
 ## Use templates
-This is an example of a Template based Sensor that pulls tomorrows planned daily yield from the attribute of the Checkwatt Daily Yield sensor.
+This is an example of a Template based Sensor that pulls tomorrows planned daily yield from the attribute of the CheckWatt Daily Yield sensor.
 
 It goes without saying, but this should be put in your `configuration.yaml`:
 ```yaml
 template:
   - sensor:
-      - name: "Checkwatt Tomorrow Yield"
+      - name: "CheckWatt Tomorrow Yield"
         unique_id: checkwatt_tomorrow_yield
         state: "{{ state_attr('sensor.skarfva_checkwatt_daily_yield', 'tomorrow_gross_income')}}"
         unit_of_measurement: "SEK"
