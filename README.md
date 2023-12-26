@@ -18,18 +18,25 @@ This integration uses cloud polling from the Checkwatt portal using a reverse en
 cd /workspaces/core/config
 mkdir custom_components
 mkdir software
-cd software
-git pull https://github.com/faanskit/ha-checkwatt.git
+
+cd /workspaces/core/config/software/
+mkdir ha-checkwatt
+mkdir pyCheckwatt
+
+cd /workspaces/core/config/software/pyCheckwatt
+git init
 git pull https://github.com/faanskit/pyCheckwatt.git
-cd ../custom_components
-ln -s ../software/ha-checkwatt/custom_components/checkwatt
-cd checkwatt
-ln -s ../../software/pyCheckwatt/pycheckwatt
+
+cd /workspaces/core/config/software/ha-checkwatt
+git init
+git pull https://github.com/faanskit/ha-checkwatt.git
+
+cd /workspaces/core/config/software/ha-checkwatt/custom_components/checkwatt
+ln -s ../../../pyCheckwatt/pycheckwatt .
 ```
 
-
 ## Enable the integration
-Go to Settings / Devices & Services / Integrations. Click **+ ADD INTERATION**
+Go to Settings / Devices & Services / Integrations. Click **+ ADD INTEGRATION**
 
 ## Configuration
 If you need more sensor and more detailed attributes in the sensors, you can configure the integration as follows
