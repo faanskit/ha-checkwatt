@@ -1,13 +1,25 @@
 # Home Assistant Checkwatt Custom Integration
 This integration uses cloud polling from the Checkwatt Energy In Balance portal using a reverse engineered private API.
 
-The focus on this integration is to reduce the amount of sensors published while at the same time maximize the information available and provide them as attributes.
+The strategy for this integration is to reduce the amount of sensors published while at the same time maximize the information available and provide them as attributes.
+
+The integration also aims to balance the user needs for information with loads on Checkwatts servers why some data may not always be up-to date.
 
 Out-of-the box, this integration provides two sensors:
 - Checkwatt Daily Yield : Your estimated yield today
 - Checkwatt Annual Yield : Your estimated annual yield
 
 The Daily Yield sensor also have an attribute that provides information about tomorrows planned yield.
+
+![checkwatt main](/images/ha_main.png)
+
+# Known Issues and Limitations
+1. The integration uses undocumented API's used by the Energy In Balance portal. These can change at any time and render this integration useless without any prior notice.
+2. The monetary information from Energy In Balance is always provisional and can change before you receive your invoice from Checkwatt.
+3. The annual yeild sensor includes today's and tomorrow's planned yield.
+4. Checkwatt Energy In Balance does not (always) provide Grid In/Out information. why it is reccomended to use other data sources for your Energy Panel.
+5. The FCR-D state and status is pulled from a logbook parameter within the API and is a very fragile piece of information. Use with care.
+6. The integration will update the Energy sensors once per minute, the Daily Yield sensor once every fifteenth minute and the Annual Yield around 2 am every morning. This to not put too much stress on the Checkwatt servers (the yield operation is slow resource heavy)
 
 # Installation
 ### HACS installation - NOT AVAILABLE
@@ -59,7 +71,7 @@ Take note that Home Assistant will store your credentials and if this is a secur
 
 ![checkwatt config step 2](/images/configure_step_2.png)
 
-The integration will now install and assuming it all wend well you will get a success message and the possibility to add its sensors to an area of your choice.
+The integration will now install and assuming it all went well you will get a success message and the possibility to add its sensors to an area of your choice.
 
 ![checkwatt config step 3](/images/configure_step_3.png)
 
@@ -98,7 +110,7 @@ After the configuration is done you need to restart the integration. Click **...
 After the system as reload you will have 1 device and 9 sensors available.
 ![checkwatt options done](/images/options_done.png)
 
-
+Your sensors will now also contain a lot of detailed attributes.
 ![checkwatt detailed daily](/images/detailed_sensor_daily.png)
 ![checkwatt detailed annual](/images/detailed_sensor_annual.png)
 
@@ -111,13 +123,13 @@ When you enter the energy panel the first time you will be guided by a Wizard:
 
 For the Grid Consumption, select the Import Energy sensor from the integration and complement it with the cost tracker using the *Spot Price VAT* sensors.
 
-Take note that you should use the sensor that includes VAT for Electricity that you purchase. Please also not that this sensor does not include markups from your electricity provider.
+**Take note** that you should use the sensor that includes VAT for Electricity that you purchase. Please **also note** that this sensor does not include markups from your electricity provider.
 
 ![checkwatt energy step 2](/images/energy_step_2.png)
 
 For Grid Consumption, select the Export Energy sensor from the integration and complement it with the cost tracker using the *Spot Price* sensors.
 
-Take note that you should use the sensor that excludes VAT for Electricity that you sell. 
+**Take note** that you should use the sensor that excludes VAT for Electricity that you sell. 
 
 ![checkwatt energy step 3](/images/energy_step_3.png)
 
