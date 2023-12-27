@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from datetime import time, timedelta
 import logging
+import random
 from typing import TypedDict
 
 from homeassistant.config_entries import ConfigEntry
@@ -105,6 +106,9 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
         self.annual_revenue = None
         self.annual_fees = None
         self.last_annual_update = None
+        self.is_boot = True
+        self.random_offset = random.randint(0, 14)
+        _LOGGER.debug("Fetching annual revenue at 3:%02d am", self.random_offset)
 
     @property
     def entry_id(self) -> str:
@@ -125,31 +129,40 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                 if not await cw_inst.get_customer_details():
                     raise UpdateFailed("Unknown error get_customer_details")
 
-                if self.update_monetary == 0:
-                    _LOGGER.debug("Fetching FCR-D data from CheckWatt")
-                    self.update_time = dt_util.now().strftime("%Y-%m-%d %H:%M:%S")
-                    end_date = dt_util.now() + timedelta(
-                        minutes=CONF_UPDATE_INTERVAL_FCRD
-                    )
-                    self.next_update_time = end_date.strftime("%Y-%m-%d %H:%M:%S")
-                    self.update_monetary = CONF_UPDATE_INTERVAL_FCRD
-                    if not await cw_inst.get_fcrd_revenue():
-                        raise UpdateFailed("Unknown error get_fcrd_revenue")
-                    self.today_revenue, self.today_fees = cw_inst.today_revenue
-                    self.tomorrow_revenue, self.tomorrow_fees = cw_inst.tomorrow_revenue
+                # Prevent slow funcion to be called at boot.
+                # The revenue sensors will be updated after ca 1 min
+                if self.is_boot:
+                    self.is_boot = False
+                else:
+                    if self.update_monetary == 0:
+                        _LOGGER.debug("Fetching FCR-D data from CheckWatt")
+                        self.update_time = dt_util.now().strftime("%Y-%m-%d %H:%M:%S")
+                        end_date = dt_util.now() + timedelta(
+                            minutes=CONF_UPDATE_INTERVAL_FCRD
+                        )
+                        self.next_update_time = end_date.strftime("%Y-%m-%d %H:%M:%S")
+                        self.update_monetary = CONF_UPDATE_INTERVAL_FCRD
+                        if not await cw_inst.get_fcrd_revenue():
+                            raise UpdateFailed("Unknown error get_fcrd_revenue")
+                        self.today_revenue, self.today_fees = cw_inst.today_revenue
+                        (
+                            self.tomorrow_revenue,
+                            self.tomorrow_fees,
+                        ) = cw_inst.tomorrow_revenue
 
-                if self.last_annual_update is None or (
-                    dt_util.now().time() >= time(3, 0)  # Wait until 3am
-                    and dt_util.start_of_local_day(dt_util.now())
-                    != dt_util.start_of_local_day(self.last_annual_update)
-                ):
-                    _LOGGER.debug("Fetching annual revenue")
-                    if not await cw_inst.get_fcrd_revenueyear():
-                        raise UpdateFailed("Unknown error get_fcrd_revenueyear")
-                    self.annual_revenue, self.annual_fees = cw_inst.year_revenue
-                    self.last_annual_update = dt_util.now()
+                    if self.last_annual_update is None or (
+                        dt_util.now().time()
+                        >= time(3, self.random_offset)  # Wait until 3am +- 15 min
+                        and dt_util.start_of_local_day(dt_util.now())
+                        != dt_util.start_of_local_day(self.last_annual_update)
+                    ):
+                        _LOGGER.debug("Fetching annual revenue")
+                        if not await cw_inst.get_fcrd_revenueyear():
+                            raise UpdateFailed("Unknown error get_fcrd_revenueyear")
+                        self.annual_revenue, self.annual_fees = cw_inst.year_revenue
+                        self.last_annual_update = dt_util.now()
 
-                self.update_monetary -= 1
+                    self.update_monetary -= 1
 
                 if use_detailed_sensors:
                     if not await cw_inst.get_power_data():
