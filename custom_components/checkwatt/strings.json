@@ -34,7 +34,7 @@
     "entity": {
         "sensor": {
             "daily_yield_sensor": {
-                "name": "CheckWatt Daily Yield",
+                "name": "CheckWatt Daily Net Income",
                 "state_attributes": {
                     "street_address": {
                         "name": "Street Address"
@@ -90,7 +90,7 @@
                 }
             },
             "annual_yield_sensor": {
-                "name": "CheckWatt Annual Yield",
+                "name": "CheckWatt Annual Net Income",
                 "state_attributes": {
                     "street_address": {
                         "name": "Street Address"
@@ -143,6 +143,14 @@
                     },
                     "vat": {
                         "name": "VAT"
+                    }
+                }
+            },
+            "battery_soc_sensor": {
+                "name": "Battery SoC",
+                "state_attributes": {
+                    "battery_power": {
+                        "name": "Battery Power"
                     }
                 }
             }

@@ -145,6 +145,14 @@
                         "name": "Moms"
                     }
                 }
+            },
+            "battery_soc_sensor": {
+                "name": "Batteriladdning",
+                "state_attributes": {
+                    "battery_power": {
+                        "name": "Batterieffekt"
+                    }
+                }
             }
         }
     }

@@ -11,7 +11,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfEnergy
+from homeassistant.const import PERCENTAGE, UnitOfEnergy
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -24,6 +24,7 @@ from .const import (
     C_ANNUAL_FEE_RATE,
     C_ANNUAL_FEES,
     C_ANNUAL_GROSS,
+    C_BATTERY_POWER,
     C_CHARGE_PEAK,
     C_CITY,
     C_DISCHARGE_PEAK,
@@ -71,6 +72,15 @@ CHECKWATT_MONETARY_SENSORS: dict[str, SensorEntityDescription] = {
         native_unit_of_measurement="SEK",
         state_class=SensorStateClass.TOTAL,
         translation_key="annual_yield_sensor",
+    ),
+    "battery": SensorEntityDescription(
+        key="battery_soc",
+        name="CheckWatt Battery SoC",
+        icon="mdi:battery-medium",
+        device_class=SensorDeviceClass.BATTERY,
+        native_unit_of_measurement=PERCENTAGE,
+        state_class=SensorStateClass.TOTAL,
+        translation_key="battery_soc_sensor",
     ),
 }
 
@@ -166,6 +176,8 @@ async def async_setup_entry(
             entities.append(
                 CheckwattAnnualSensor(coordinator, description, use_detailed_attributes)
             )
+        elif key == "battery":
+            entities.append(CheckwattBatterySoCSensor(coordinator, description))
 
     if use_detailed_sensors:
         _LOGGER.debug(
@@ -601,3 +613,40 @@ class CheckwattSpotPriceSensor(AbstractCheckwattSensor):
         if self.vat_key == "inc_vat":
             return round(self._coordinator.data["spot_price"] * 1.25, 3)
         return round(self._coordinator.data["spot_price"], 3)
+
+
+class CheckwattBatterySoCSensor(AbstractCheckwattSensor):
+    """Representation of a CheckWatt Battery SoC sensor."""
+
+    def __init__(
+        self,
+        coordinator: CheckwattCoordinator,
+        description: SensorEntityDescription,
+    ) -> None:
+        """Initialize the sensor."""
+        _LOGGER.debug("Creating %s sensor", description.name)
+        super().__init__(coordinator=coordinator, description=description)
+
+    async def async_update(self) -> None:
+        """Get the latest data and updates the states."""
+        if "battery_power" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_BATTERY_POWER: self._coordinator.data["battery_power"]}
+            )
+        self._attr_available = True
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Get the latest data and updates the states."""
+        if "battery_soc" in self._coordinator.data:
+            self._attr_native_value = self._coordinator.data["battery_soc"]
+        if "battery_power" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_BATTERY_POWER: self._coordinator.data["battery_power"]}
+            )
+        super()._handle_coordinator_update()
+
+    @property
+    def native_value(self) -> str | None:
+        """Get the latest state value."""
+        return self._coordinator.data["battery_soc"]
