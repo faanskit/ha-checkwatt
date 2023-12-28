@@ -350,7 +350,7 @@ class CheckwattSensor(AbstractCheckwattSensor):
                 self._attr_extra_state_attributes[C_TOMORROW_FEES] = round(
                     tomorrow_fees, 2
                 )
-                if revenue > 0:
+                if tomorrow_revenue > 0:
                     self._attr_extra_state_attributes[
                         C_TOMORROW_FEE_RATE
                     ] = f"{round((tomorrow_fees / tomorrow_revenue) * 100, 2)} %"
@@ -460,10 +460,12 @@ class CheckwattAnnualSensor(AbstractCheckwattSensor):
                 self._attr_extra_state_attributes[C_ANNUAL_FEES] = round(
                     self.total_annual_fee, 2
                 )
-                self._attr_extra_state_attributes[
-                    C_ANNUAL_FEE_RATE
-                ] = f"{round((self.total_annual_fee / self.total_annual_revenue) * 100, 2)} %"
-
+                if self.total_annual_revenue > 0:
+                    self._attr_extra_state_attributes[
+                        C_ANNUAL_FEE_RATE
+                    ] = f"{round((self.total_annual_fee / self.total_annual_revenue) * 100, 2)} %"
+                else:
+                    self._attr_extra_state_attributes[C_ANNUAL_FEE_RATE] = "N/A %"
         self._attr_available = False
 
     async def async_update(self) -> None:
@@ -508,9 +510,12 @@ class CheckwattAnnualSensor(AbstractCheckwattSensor):
                 self._attr_extra_state_attributes[C_ANNUAL_FEES] = round(
                     self.total_annual_fee, 2
                 )
-                self._attr_extra_state_attributes[
-                    C_ANNUAL_FEE_RATE
-                ] = f"{round((self.total_annual_fee / self.total_annual_revenue) * 100, 2)} %"
+                if self.total_annual_revenue > 0:
+                    self._attr_extra_state_attributes[
+                        C_ANNUAL_FEE_RATE
+                    ] = f"{round((self.total_annual_fee / self.total_annual_revenue) * 100, 2)} %"
+                else:
+                    self._attr_extra_state_attributes[C_ANNUAL_FEE_RATE] = "N/A %"
 
         super()._handle_coordinator_update()
 

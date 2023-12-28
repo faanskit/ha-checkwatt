@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from pycheckwatt import CheckwattManager
 import voluptuous as vol
 
 from homeassistant import config_entries
@@ -13,7 +14,6 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 
 from .const import CONF_DETAILED_ATTRIBUTES, CONF_DETAILED_SENSORS, DOMAIN
-from .pycheckwatt import CheckwattManager
 
 CONF_TITLE = "CheckWatt"
 

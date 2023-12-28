@@ -22,12 +22,8 @@ The Daily Yield sensor also have an attribute that provides information about to
 6. The integration will update the Energy sensors once per minute, the Daily Yield sensor once every fifteenth minute and the Annual Yield around 2 am every morning. This to not put too much stress on the CheckWatt servers (the yield operation is slow resource heavy)
 
 # Installation
-### HACS installation - NOT AVAILABLE
-The integration will be published on Hacs but is currently not available there.
-The process to publish on Hacs includes to provide branding material to Home Assistant developers. This process is started and when branding is approved, the integration will be published on Hacs and the below link will be made functional.
-
+### HACS installation
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=faanskit&repository=ha-checkwatt&category=integration)
-
 
 
 ### Git installation
@@ -36,35 +32,6 @@ The process to publish on Hacs includes to provide branding material to Home Ass
 3. Create a `custom_components` folder of it does not exist, navigate down into it after creation.
 4. Execute the following command: `git clone https://github.com/faanskit/ha-checkwatt.git checkwatt`
 5. Restart Home-Assistant.
-
-### Development installation
-If you are a developer and want to contribute to this integration we strongly recommend to use the Home Assistant Developer environment.
-
-Currently the process is quite technical, so basic understanding of software development and Linux are expected.
-
-1. Install a HA developer environment: https://developers.home-assistant.io/docs/development_environment/
-
-2. In the terminal (inside the docker container) do this:
-```
-cd /workspaces/core/config
-mkdir custom_components
-mkdir software
-
-cd /workspaces/core/config/software/
-mkdir ha-checkwatt
-mkdir pyCheckwatt
-
-cd /workspaces/core/config/software/pyCheckwatt
-git init
-git pull https://github.com/faanskit/pyCheckwatt.git
-
-cd /workspaces/core/config/software/ha-checkwatt
-git init
-git pull https://github.com/faanskit/ha-checkwatt.git
-
-cd /workspaces/core/config/software/ha-checkwatt/custom_components/checkwatt
-ln -s ../../../pyCheckwatt/pycheckwatt .
-```
 
 ## Enable the integration
 Go to Settings / Devices & Services / Integrations. Click **+ ADD INTEGRATION**
@@ -206,7 +173,6 @@ It was developed by [@faanskit](https://github.com/faanskit) with support from:
 
 - [@flopp999](https://github.com/flopp999)
 - [@angoyd](https://github.com/angoyd)
-- [@mattiasclaesson](https://github.com/mattiasclaesson)
 
 This integration could not have been made without the excellent work done by the Home Assistant team.
 
