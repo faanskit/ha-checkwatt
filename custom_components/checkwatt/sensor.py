@@ -79,7 +79,7 @@ CHECKWATT_MONETARY_SENSORS: dict[str, SensorEntityDescription] = {
         icon="mdi:battery-medium",
         device_class=SensorDeviceClass.BATTERY,
         native_unit_of_measurement=PERCENTAGE,
-        state_class=SensorStateClass.TOTAL,
+        state_class=SensorStateClass.MEASUREMENT,
         translation_key="battery_soc_sensor",
     ),
 }
