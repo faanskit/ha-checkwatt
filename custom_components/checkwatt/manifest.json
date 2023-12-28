@@ -2,7 +2,9 @@
   "domain": "checkwatt",
   "name": "CheckWatt",
   "codeowners": [
-    "@faanskit"
+    "@faanskit",
+    "@angoyd",
+    "@flopp999"
   ],
   "config_flow": true,
   "dependencies": [],
@@ -10,8 +12,8 @@
   "homekit": {},
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/faanskit/ha-checkwatt/issues",
-  "requirements": [],
+  "requirements": ["pycheckwatt>=0.1.4"],
   "ssdp": [],
-  "version": "0.0.1",
+  "version": "0.1.0",
   "zeroconf": []
 }

@@ -13,7 +13,7 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 
 from .const import CONF_DETAILED_ATTRIBUTES, CONF_DETAILED_SENSORS, DOMAIN
-from .pycheckwatt import CheckwattManager
+from pycheckwatt import CheckwattManager
 
 CONF_TITLE = "CheckWatt"
 

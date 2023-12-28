@@ -19,7 +19,7 @@ from .const import (
     CONF_UPDATE_INTERVAL_FCRD,
     DOMAIN,
 )
-from .pycheckwatt import CheckwattManager
+from pycheckwatt import CheckwattManager
 
 _LOGGER = logging.getLogger(__name__)
 

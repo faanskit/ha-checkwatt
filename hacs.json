@@ -1,6 +1,6 @@
 {
     "name": "CheckWatt",
-    "homeassistant": "2022.11.1",
+    "homeassistant": "2023.12.3",
     "render_readme": true,
     "country": ["ALL"]
   }
