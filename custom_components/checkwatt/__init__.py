@@ -128,10 +128,13 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
 
             async with CheckwattManager(username, password) as cw_inst:
                 if not await cw_inst.login():
-                    raise InvalidAuth
+                    _LOGGER.error("Failed to login, abort update")
+                    raise UpdateFailed("Failed to login")
                 if not await cw_inst.get_customer_details():
+                    _LOGGER.error("Failed to obtain customer details, abort update")
                     raise UpdateFailed("Unknown error get_customer_details")
                 if not await cw_inst.get_energy_flow():
+                    _LOGGER.error("Failed to get energy flows, abort update")
                     raise UpdateFailed("Unknown error get_energy_flow")
 
                 # Prevent slow funcion to be called at boot.
