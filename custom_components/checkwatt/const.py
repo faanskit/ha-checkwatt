@@ -7,8 +7,8 @@ DOMAIN = "checkwatt"
 # For FCR-D since it is slow and resource consuming, is set to once per 15 minute
 CONF_UPDATE_INTERVAL = 1
 CONF_UPDATE_INTERVAL_FCRD = 15
-ATTRIBUTION = "Data provided by Checkwatt EnergyInBalance"
-MANUFACTURER = "Checkwatt"
+ATTRIBUTION = "Data provided by CheckWatt EnergyInBalance"
+MANUFACTURER = "CheckWatt"
 CHECKWATT_MODEL = "Checkwatt"
 
 CONF_DETAILED_SENSORS: Final = "show_details"
