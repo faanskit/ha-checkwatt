@@ -173,7 +173,6 @@ It was developed by [@faanskit](https://github.com/faanskit) with support from:
 
 - [@flopp999](https://github.com/flopp999)
 - [@angoyd](https://github.com/angoyd)
-- [@mattiasclaesson](https://github.com/mattiasclaesson)
 
 This integration could not have been made without the excellent work done by the Home Assistant team.
 
