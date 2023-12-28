@@ -6,20 +6,21 @@ The strategy for this integration is to reduce the amount of sensors published w
 The integration also aims to balance the user needs for information with loads on CheckWatts servers why some data may not always be up-to date.
 
 Out-of-the box, this integration provides two sensors:
-- CheckWatt Daily Yield : Your estimated yield today
-- CheckWatt Annual Yield : Your estimated annual yield
+- CheckWatt Daily Net Income : Your estimated net income today
+- CheckWatt Annual Net Income : Your estimated annual net income
+- Battery State of Charge: Your batterys state of charge
 
-The Daily Yield sensor also have an attribute that provides information about tomorrows estimated yield.
+The Daily Net Income sensor also have an attribute that provides information about tomorrows estimated Net Income.
 
 ![checkwatt main](/images/ha_main.png)
 
 # Known Issues and Limitations
 1. The integration uses undocumented API's used by the EnergyInBalance portal. These can change at any time and render this integration useless without any prior notice.
 2. The monetary information from EnergyInBalance is always provisional and can change before you receive your invoice from CheckWatt.
-3. The annual yeild sensor includes today's and tomorrow's estimated yield.
+3. The annual yeild sensor includes today's and tomorrow's estimated net income.
 4. CheckWatt EnergyInBalance does not (always) provide Grid In/Out information. Why it is recommended to use other data sources for your Energy Panel.
 5. The FCR-D state and status is pulled from a logbook parameter within the API and is a very fragile piece of information. Use with care.
-6. The integration will update the Energy sensors once per minute, the Daily Yield sensor once every fifteenth minute and the Annual Yield around 2 am every morning. This to not put too much stress on the CheckWatt servers (the yield operation is slow resource heavy)
+6. The integration will update the Energy sensors once per minute, the Daily Net Income sensor once every fifteenth minute and the Annual Net Income around 2 am every morning. This to not put too much stress on the CheckWatt servers (the net income operation is slow resource heavy)
 
 # Installation
 ### HACS installation
@@ -54,9 +55,9 @@ On your Overview you will now have two new sensors in a new group:
 
 ![checkwatt config done](/images/configure_done.png)
 
-These sensors will show you your estimated daily and annual yield alongside with some basic attributes like Street Address, Zip Code and City.
+These sensors will show you your estimated daily and annual net income alongside with some basic attributes like Street Address, Zip Code and City.
 
-The Daily Yield sensor will also show tomorrows estimated yield as an attribute.
+The Daily Net Income sensor will also show tomorrows estimated net income as an attribute.
 
 ![checkwatt basic daily](/images/basic_sensor_daily.png)
 ![checkwatt basic annual](/images/basic_sensor_annual.png)
@@ -134,7 +135,7 @@ For now, you need to pull that data from another integration.
 ![checkwatt energy done](/images/energy_done.png)
 
 ## Final result
-When the system is fully set-up it you have sensors that provides you with your daily and annual yield and if you have configured it accordingly, you also have sensors available for the Home Assistant Energy Dashboard.
+When the system is fully set-up it you have sensors that provides you with your daily and annual net income and if you have configured it accordingly, you also have sensors available for the Home Assistant Energy Dashboard.
 
 The final result can look like this:
 
@@ -144,13 +145,13 @@ The final result can look like this:
 If you think that some of the attributes provided should be sensors, please consider to use [Templates](https://www.home-assistant.io/docs/configuration/templating/) before you register it as an [issue](https://github.com/faanskit/ha-checkwatt/issues). If it can be done via a Template Sensor, it will most likely be rejected.
 
 ## Use templates
-This is an example of a Template based Sensor that pulls tomorrows estimated daily yield from the attribute of the CheckWatt Daily Yield sensor.
+This is an example of a Template based Sensor that pulls tomorrows estimated daily net income from the attribute of the CheckWatt Daily Net Income sensor.
 
 It goes without saying, but this should be put in your `configuration.yaml`:
 ```yaml
 template:
   - sensor:
-      - name: "CheckWatt Tomorrow Yield"
+      - name: "CheckWatt Tomorrow Net Income"
         unique_id: checkwatt_tomorrow_yield
         state: "{{ state_attr('sensor.skarfva_checkwatt_daily_yield', 'tomorrow_gross_income')}}"
         unit_of_measurement: "SEK"
