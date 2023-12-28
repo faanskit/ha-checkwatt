@@ -9,14 +9,14 @@ Out-of-the box, this integration provides two sensors:
 - CheckWatt Daily Yield : Your estimated yield today
 - CheckWatt Annual Yield : Your estimated annual yield
 
-The Daily Yield sensor also have an attribute that provides information about tomorrows planned yield.
+The Daily Yield sensor also have an attribute that provides information about tomorrows estimated yield.
 
 ![checkwatt main](/images/ha_main.png)
 
 # Known Issues and Limitations
 1. The integration uses undocumented API's used by the EnergyInBalance portal. These can change at any time and render this integration useless without any prior notice.
 2. The monetary information from EnergyInBalance is always provisional and can change before you receive your invoice from CheckWatt.
-3. The annual yeild sensor includes today's and tomorrow's planned yield.
+3. The annual yeild sensor includes today's and tomorrow's estimated yield.
 4. CheckWatt EnergyInBalance does not (always) provide Grid In/Out information. Why it is reccomended to use other data sources for your Energy Panel.
 5. The FCR-D state and status is pulled from a logbook parameter within the API and is a very fragile piece of information. Use with care.
 6. The integration will update the Energy sensors once per minute, the Daily Yield sensor once every fifteenth minute and the Annual Yield around 2 am every morning. This to not put too much stress on the CheckWatt servers (the yield operation is slow resource heavy)
@@ -54,9 +54,9 @@ On your Overview you will now have two new sensors in a new group:
 
 ![checkwatt config done](/images/configure_done.png)
 
-These sensors will show you your planned daily and annual yield alongside with some basic attributes like Street Address, Zip Code and City.
+These sensors will show you your estimated daily and annual yield alongside with some basic attributes like Street Address, Zip Code and City.
 
-The Daily Yield sensor will also show tomorrows planned yield as an attribute.
+The Daily Yield sensor will also show tomorrows estimated yield as an attribute.
 
 ![checkwatt basic daily](/images/basic_sensor_daily.png)
 ![checkwatt basic annual](/images/basic_sensor_annual.png)
@@ -144,7 +144,7 @@ The final result can look like this:
 If you think that some of the attributes provided should be sensors, please consider to use [Templates](https://www.home-assistant.io/docs/configuration/templating/) before you register it as an [issue](https://github.com/faanskit/ha-checkwatt/issues). If it can be done via a Template Sensor, it will most likely be rejected.
 
 ## Use templates
-This is an example of a Template based Sensor that pulls tomorrows planned daily yield from the attribute of the CheckWatt Daily Yield sensor.
+This is an example of a Template based Sensor that pulls tomorrows estimated daily yield from the attribute of the CheckWatt Daily Yield sensor.
 
 It goes without saying, but this should be put in your `configuration.yaml`:
 ```yaml
