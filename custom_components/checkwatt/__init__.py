@@ -57,6 +57,8 @@ class CheckwattResp(TypedDict):
     price_zone: str
     annual_revenue: float
     annual_fees: float
+    battery_power: float
+    battery_soc: float
 
 
 async def update_listener(hass: HomeAssistant, entry):
@@ -129,6 +131,8 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     raise InvalidAuth
                 if not await cw_inst.get_customer_details():
                     raise UpdateFailed("Unknown error get_customer_details")
+                if not await cw_inst.get_energy_flow():
+                    raise UpdateFailed("Unknown error get_energy_flow")
 
                 # Prevent slow funcion to be called at boot.
                 # The revenue sensors will be updated after ca 1 min
@@ -189,6 +193,9 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     "battery_charge_peak": cw_inst.battery_charge_peak,
                     "battery_discharge_peak": cw_inst.battery_discharge_peak,
                 }
+                if cw_inst.energy_data is not None:
+                    resp["battery_power"] = cw_inst.battery_power
+                    resp["battery_soc"] = cw_inst.battery_soc
 
                 # Use self stored variant of revenue parameters as they are not always fetched
                 if self.today_revenue is not None:

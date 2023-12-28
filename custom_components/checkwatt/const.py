@@ -1,4 +1,4 @@
-"""Constants for the Checkwatt integration."""
+"""Constants for the CheckWatt integration."""
 from typing import Final
 
 DOMAIN = "checkwatt"
@@ -8,8 +8,8 @@ DOMAIN = "checkwatt"
 CONF_UPDATE_INTERVAL = 1
 CONF_UPDATE_INTERVAL_FCRD = 15
 ATTRIBUTION = "Data provided by CheckWatt EnergyInBalance"
-MANUFACTURER = "Checkwatt"
-CHECKWATT_MODEL = "Checkwatt"
+MANUFACTURER = "CheckWatt"
+CHECKWATT_MODEL = "CheckWatt"
 
 CONF_DETAILED_SENSORS: Final = "show_details"
 CONF_DETAILED_ATTRIBUTES: Final = "show_detailed_attributes"
@@ -17,13 +17,14 @@ CONF_DETAILED_ATTRIBUTES: Final = "show_detailed_attributes"
 # Misc
 P_UNKNOWN = "Unknown"
 
-# Checkwatt Sensor Attributes
+# CheckWatt Sensor Attributes
 # NOTE Keep these names aligned with strings.json
 #
 C_ADR = "street_address"
 C_ANNUAL_FEES = "annual_fees"
 C_ANNUAL_FEE_RATE = "annual_fee_rate"
 C_ANNUAL_GROSS = "annual_gross_income"
+C_BATTERY_POWER = "battery_power"
 C_CHARGE_PEAK = "charge_peak"
 C_CITY = "city"
 C_DISCHARGE_PEAK = "discharge_peak"
