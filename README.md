@@ -17,7 +17,7 @@ The Daily Yield sensor also have an attribute that provides information about to
 1. The integration uses undocumented API's used by the EnergyInBalance portal. These can change at any time and render this integration useless without any prior notice.
 2. The monetary information from EnergyInBalance is always provisional and can change before you receive your invoice from CheckWatt.
 3. The annual yeild sensor includes today's and tomorrow's planned yield.
-4. CheckWatt EnergyInBalance does not (always) provide Grid In/Out information. why it is reccomended to use other data sources for your Energy Panel.
+4. CheckWatt EnergyInBalance does not (always) provide Grid In/Out information. Why it is reccomended to use other data sources for your Energy Panel.
 5. The FCR-D state and status is pulled from a logbook parameter within the API and is a very fragile piece of information. Use with care.
 6. The integration will update the Energy sensors once per minute, the Daily Yield sensor once every fifteenth minute and the Annual Yield around 2 am every morning. This to not put too much stress on the CheckWatt servers (the yield operation is slow resource heavy)
 
