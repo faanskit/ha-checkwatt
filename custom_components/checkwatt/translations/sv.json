@@ -37,7 +37,7 @@
                 "name": "CheckWatt Daglig Intäkt",
                 "state_attributes": {
                     "street_address": {
-                        "name": "Address"
+                        "name": "Adress"
                     },
                     "zip_code": {
                         "name": "Postnummer"
