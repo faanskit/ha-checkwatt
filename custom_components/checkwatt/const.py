@@ -9,8 +9,8 @@ CONF_UPDATE_INTERVAL = 1
 CONF_UPDATE_INTERVAL_FCRD = 15
 ATTRIBUTION = "Data provided by CheckWatt EnergyInBalance"
 MANUFACTURER = "CheckWatt"
-CHECKWATT_MODEL = "Checkwatt"
-
+CHECKWATT_MODEL = "CheckWatt"
+# will the new names broke something?
 CONF_DETAILED_SENSORS: Final = "show_details"
 CONF_DETAILED_ATTRIBUTES: Final = "show_detailed_attributes"
 
