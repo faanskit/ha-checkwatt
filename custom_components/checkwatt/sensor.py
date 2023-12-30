@@ -28,6 +28,9 @@ from .const import (
     C_CHARGE_PEAK,
     C_CITY,
     C_DISCHARGE_PEAK,
+    C_DISPLAY_NAME,
+    C_DSO,
+    C_ENERGY_PROVIDER,
     C_FCRD_DATE,
     C_FCRD_STATE,
     C_FCRD_STATUS,
@@ -241,6 +244,10 @@ class CheckwattSensor(AbstractCheckwattSensor):
         self._attr_unique_id = f'checkwattUid_{self._coordinator.data["id"]}'
 
         self._attr_extra_state_attributes = {}
+        if "display_name" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_DISPLAY_NAME: self._coordinator.data["display_name"]}
+            )
         if "address" in self._coordinator.data:
             self._attr_extra_state_attributes.update(
                 {C_ADR: self._coordinator.data["address"]}
@@ -252,6 +259,14 @@ class CheckwattSensor(AbstractCheckwattSensor):
         if "city" in self._coordinator.data:
             self._attr_extra_state_attributes.update(
                 {C_CITY: self._coordinator.data["city"]}
+            )
+        if "dso" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_DSO: self._coordinator.data["dso"]}
+            )
+        if "energy_provider" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_ENERGY_PROVIDER: self._coordinator.data["energy_provider"]}
             )
         if "revenue" in self._coordinator.data and "fees" in self._coordinator.data:
             revenue = self._coordinator.data["revenue"]

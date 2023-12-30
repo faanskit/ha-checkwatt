@@ -36,6 +36,9 @@
             "daily_yield_sensor": {
                 "name": "CheckWatt Daily Net Income",
                 "state_attributes": {
+                    "display_name": {
+                        "name": "Facility"
+                    },
                     "street_address": {
                         "name": "Street Address"
                     },
@@ -44,6 +47,12 @@
                     },
                     "city": {
                         "name": "City"
+                    },
+                    "dso": {
+                        "name": "Distribution System Operator"
+                    },
+                    "energy_provider": {
+                        "name": "Energy Provider"
                     },
                     "today_gross_income": {
                         "name": "Today Gross Income"

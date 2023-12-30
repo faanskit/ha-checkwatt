@@ -59,6 +59,8 @@ class CheckwattResp(TypedDict):
     annual_fees: float
     battery_power: float
     battery_soc: float
+    dso: str
+    energy_provider: str
 
 
 async def update_listener(hass: HomeAssistant, entry):
@@ -110,6 +112,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
         self.annual_fees = None
         self.last_annual_update = None
         self.is_boot = True
+        self.energy_provider = None
         self.random_offset = random.randint(0, 14)
         _LOGGER.debug("Fetching annual revenue at 3:%02d am", self.random_offset)
 
@@ -141,6 +144,14 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                 # The revenue sensors will be updated after ca 1 min
                 if self.is_boot:
                     self.is_boot = False
+                    if (
+                        "Meter" in cw_inst.customer_details
+                        and len(cw_inst.customer_details["Meter"]) > 0
+                        and "ElhandelsbolagId" in cw_inst.customer_details["Meter"][0]
+                    ):
+                        self.energy_provider = await cw_inst.get_energy_trading_company(
+                            cw_inst.customer_details["Meter"][0]["ElhandelsbolagId"]
+                        )
                 else:
                     if self.update_monetary == 0:
                         _LOGGER.debug("Fetching FCR-D data from CheckWatt")
@@ -195,6 +206,8 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     "fcr_d_date": cw_inst.fcrd_timestamp,
                     "battery_charge_peak": cw_inst.battery_charge_peak,
                     "battery_discharge_peak": cw_inst.battery_discharge_peak,
+                    "dso": cw_inst.battery_registration["Dso"],
+                    "energy_provider": self.energy_provider,
                 }
                 if cw_inst.energy_data is not None:
                     resp["battery_power"] = cw_inst.battery_power
