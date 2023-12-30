@@ -36,6 +36,9 @@
             "daily_yield_sensor": {
                 "name": "CheckWatt Daglig Intäkt",
                 "state_attributes": {
+                    "display_name": {
+                        "name": "Anläggning"
+                    },
                     "street_address": {
                         "name": "Adress"
                     },
@@ -44,6 +47,12 @@
                     },
                     "city": {
                         "name": "Stad"
+                    },
+                    "dso": {
+                        "name": "Nätägare"
+                    },
+                    "energy_provider": {
+                        "name": "Elhandelsbolag"
                     },
                     "today_gross_income": {
                         "name": "Dagens Bruttoinkomst"
