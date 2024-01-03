@@ -25,7 +25,7 @@
                 "data": {
                     "show_details": "Skapa energisensorer",
                     "show_detailed_attributes": "Visa detaljerade attribut",
-                    "push_to_cw_rankt": "Skicka data till CheckWattRank"
+                    "push_to_cw_rank": "Skicka data till CheckWattRank"
                 },
                 "description": "Dina val",
                 "title": "CheckWatt"

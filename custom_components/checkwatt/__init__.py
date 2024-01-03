@@ -260,7 +260,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
             raise UpdateFailed(str(err)) from err
 
     async def push_to_checkwatt_rank(self, cw_inst):
-        """Push data to ChekWattRank."""
+        """Push data to CheckWattRank."""
         if self.today_revenue is not None:
             if (
                 "Meter" in cw_inst.customer_details

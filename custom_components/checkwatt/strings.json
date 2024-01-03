@@ -25,7 +25,7 @@
                 "data": {
                     "show_details": "Provide energy sensors",
                     "show_detailed_attributes": "Offer detailed attributes",
-                    "push_to_cw_rankt": "Push data to CheckWattRank"
+                    "push_to_cw_rank": "Push data to CheckWattRank"
                 },
                 "description": "Select options",
                 "title": "CheckWatt"
