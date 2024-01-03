@@ -271,9 +271,8 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     "Content-Type": "application/json",
                 }
                 payload = {
-                    # TODO:
-                    # "display_name": cw_inst.customer_details["Meter"][0]["DisplayName"],
-                    "display_name": "xxTESTxx",
+                    "display_name": cw_inst.customer_details["Meter"][0]["DisplayName"],
+                    # "display_name": "xxTESTxx",
                     "dso": cw_inst.battery_registration["Dso"],
                     "electricity_company": self.energy_provider,
                     "electricity_area": cw_inst.price_zone,
@@ -283,8 +282,6 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     "today_net_income": self.today_revenue - self.today_fees,
                     "reseller_id": cw_inst.customer_details["Meter"][0]["ResellerId"],
                 }
-                _LOGGER.debug("CheckWattRank Push Header: %s", headers)
-                _LOGGER.debug("CheckWattRank Push Payload: %s", payload)
 
                 # Specify a timeout value (in seconds)
                 timeout_seconds = 10
