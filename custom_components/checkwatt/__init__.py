@@ -17,6 +17,7 @@ from homeassistant.util import dt as dt_util
 
 from .const import (
     CONF_DETAILED_SENSORS,
+    CONF_PUSH_CW_TO_RANK,
     CONF_UPDATE_INTERVAL,
     CONF_UPDATE_INTERVAL_FCRD,
     DOMAIN,
@@ -128,6 +129,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
             username = self._entry.data.get(CONF_USERNAME)
             password = self._entry.data.get(CONF_PASSWORD)
             use_detailed_sensors = self._entry.options.get(CONF_DETAILED_SENSORS)
+            push_to_cw_rank = self._entry.options.get(CONF_PUSH_CW_TO_RANK)
 
             async with CheckwattManager(username, password) as cw_inst:
                 if not await cw_inst.login():
@@ -183,13 +185,19 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
 
                     self.update_monetary -= 1
 
+                # Price Zone is used both as Detailed Sensor and by Push to CheckWattRank
+                if push_to_cw_rank or use_detailed_sensors:
+                    if not await cw_inst.get_price_zone():
+                        raise UpdateFailed("Unknown error get_price_zone")
                 if use_detailed_sensors:
                     if not await cw_inst.get_power_data():
                         raise UpdateFailed("Unknown error get_power_data")
-                    if not await cw_inst.get_price_zone():
-                        raise UpdateFailed("Unknown error get_price_zone")
                     if not await cw_inst.get_spot_price():
                         raise UpdateFailed("Unknown error get_spot_price")
+
+                if push_to_cw_rank:
+                    # TODO: Only push once per day, and after a given time
+                    await self.push_to_checkwatt_rank(cw_inst)
 
                 resp: CheckwattResp = {
                     "id": cw_inst.customer_details["Id"],
@@ -240,6 +248,27 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
             raise ConfigEntryAuthFailed from err
         except CheckwattError as err:
             raise UpdateFailed(str(err)) from err
+
+    async def push_to_checkwatt_rank(self, cw_inst):
+        """Push data to ChekWattRank."""
+        # url: 'https://checkwattrank.netlify.app/.netlify/functions/publishToSheet'
+        # method: 'POST'
+        if self.today_revenue is not None:
+            headers = {
+                "Content-Type": "application/json",
+            }
+            payload = {
+                "display_name": cw_inst.customer_details["Meter"][0]["DisplayName"],
+                "dso": cw_inst.battery_registration["Dso"],
+                "electricity_company": self.energy_provider,
+                "electricity_area": cw_inst.price_zone,
+                "installed_power": cw_inst.battery_charge_peak,
+                "today_gross_income": self.today_revenue,
+                "today_fee": self.today_fees,
+                "today_net_income": self.today_revenue - self.today_fees,
+            }
+            _LOGGER.debug("CheckWattRank Push Header: %s", headers)
+            _LOGGER.debug("CheckWattRank Push Payload: %s", payload)
 
 
 class CheckwattError(HomeAssistantError):
