@@ -161,6 +161,12 @@
                 "state_attributes": {
                     "battery_power": {
                         "name": "Batterieffekt"
+                    },
+                    "grid_power": {
+                        "name": "Näteffekt"
+                    },
+                    "solar_power": {
+                        "name": "Solcellseffekt"
                     }
                 }
             }

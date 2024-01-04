@@ -60,6 +60,8 @@ class CheckwattResp(TypedDict):
     price_zone: str
     annual_revenue: float
     annual_fees: float
+    grid_power: float
+    solar_power: float
     battery_power: float
     battery_soc: float
     dso: str
@@ -229,6 +231,8 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                 }
                 if cw_inst.energy_data is not None:
                     resp["battery_power"] = cw_inst.battery_power
+                    resp["grid_power"] = cw_inst.grid_power
+                    resp["solar_power"] = cw_inst.solar_power
                     resp["battery_soc"] = cw_inst.battery_soc
 
                 # Use self stored variant of revenue parameters as they are not always fetched

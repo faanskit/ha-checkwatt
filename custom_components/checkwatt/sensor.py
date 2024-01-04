@@ -34,8 +34,10 @@ from .const import (
     C_FCRD_DATE,
     C_FCRD_STATE,
     C_FCRD_STATUS,
+    C_GRID_POWER,
     C_NEXT_UPDATE_TIME,
     C_PRICE_ZONE,
+    C_SOLAR_POWER,
     C_TODAY_FEE_RATE,
     C_TODAY_FEES,
     C_TODAY_GROSS,
@@ -647,6 +649,14 @@ class CheckwattBatterySoCSensor(AbstractCheckwattSensor):
             self._attr_extra_state_attributes.update(
                 {C_BATTERY_POWER: self._coordinator.data["battery_power"]}
             )
+        if "grid_power" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_GRID_POWER: self._coordinator.data["grid_power"]}
+            )
+        if "solar_power" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_SOLAR_POWER: self._coordinator.data["solar_power"]}
+            )
         self._attr_available = True
 
     @callback
@@ -657,6 +667,14 @@ class CheckwattBatterySoCSensor(AbstractCheckwattSensor):
         if "battery_power" in self._coordinator.data:
             self._attr_extra_state_attributes.update(
                 {C_BATTERY_POWER: self._coordinator.data["battery_power"]}
+            )
+        if "grid_power" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_GRID_POWER: self._coordinator.data["grid_power"]}
+            )
+        if "solar_power" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_SOLAR_POWER: self._coordinator.data["solar_power"]}
             )
         super()._handle_coordinator_update()
 
