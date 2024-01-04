@@ -161,6 +161,12 @@
                 "state_attributes": {
                     "battery_power": {
                         "name": "Battery Power"
+                    },
+                    "grid_power": {
+                        "name": "Grid Power"
+                    },
+                    "solar_power": {
+                        "name": "Solar Power"
                     }
                 }
             }
