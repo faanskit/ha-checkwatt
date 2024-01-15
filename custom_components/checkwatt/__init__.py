@@ -269,22 +269,15 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     resp["price_zone"] = cw_inst.price_zone
 
                 # Check if FCR-D State has changed and dispatch it ACTIVATED/ DEACTIVATED
-                current = self.fcrd_state
-                new = cw_inst.fcrd_state
-                if current == "ACTIVATED":
-                    new = "DEACTIVATE"
-                elif current == "DEACTIVATE":
-                    new = "ACTIVATED"
-
-                if current != new:
+                if self.fcrd_state != cw_inst.fcrd_state:
                     signal_payload = {
                         "current_fcrd": {
-                            "state": current,
+                            "state": self.fcrd_state,
                             "status": self.fcrd_percentage,
                             "date": self.fcrd_timestamp,
                         },
                         "new_fcrd": {
-                            "state": new,
+                            "state": cw_inst.fcrd_state,
                             "status": cw_inst.fcrd_percentage,
                             "date": cw_inst.fcrd_timestamp,
                         },
@@ -298,7 +291,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     )
 
                     # Update self to discover next change
-                    self.fcrd_state = new
+                    self.fcrd_state = cw_inst.fcrd_state
                     self.fcrd_percentage = cw_inst.fcrd_percentage
                     self.fcrd_timestamp = cw_inst.fcrd_timestamp
 
