@@ -14,6 +14,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
@@ -27,7 +28,7 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = [Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.EVENT]
 
 
 class CheckwattResp(TypedDict):
@@ -120,6 +121,10 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
         self.is_boot = True
         self.energy_provider = None
         self.random_offset = random.randint(0, 14)
+        self.fcrd_state = None
+        self.fcrd_percentage = None
+        self.fcrd_timestamp = None
+        self._id = None
         _LOGGER.debug("Fetching annual revenue at 3:%02d am", self.random_offset)
 
     @property
@@ -159,6 +164,13 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                         self.energy_provider = await cw_inst.get_energy_trading_company(
                             cw_inst.customer_details["Meter"][0]["ElhandelsbolagId"]
                         )
+
+                    # Store fcrd_state at boot, used to spark event
+                    self.fcrd_state = cw_inst.fcrd_state
+                    self.fcrd_percentage = cw_inst.fcrd_percentage
+                    self.fcrd_timestamp = cw_inst.fcrd_timestamp
+                    self._id = cw_inst.customer_details["Id"]
+
                 else:
                     if self.update_monetary == 0:
                         _LOGGER.debug("Fetching FCR-D data from CheckWatt")
@@ -255,6 +267,40 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     time_hour = int(dt_util.now().strftime("%H"))
                     resp["spot_price"] = cw_inst.get_spot_price_excl_vat(time_hour)
                     resp["price_zone"] = cw_inst.price_zone
+
+                # Check if FCR-D State has changed and dispatch it ACTIVATED/ DEACTIVATED
+                current = self.fcrd_state
+                new = cw_inst.fcrd_state
+                if current == "ACTIVATED":
+                    new = "DEACTIVATE"
+                elif current == "DEACTIVATE":
+                    new = "ACTIVATED"
+
+                if current != new:
+                    signal_payload = {
+                        "current_fcrd": {
+                            "state": current,
+                            "status": self.fcrd_percentage,
+                            "date": self.fcrd_timestamp,
+                        },
+                        "new_fcrd": {
+                            "state": new,
+                            "status": cw_inst.fcrd_percentage,
+                            "date": cw_inst.fcrd_timestamp,
+                        },
+                    }
+
+                    # Dispatch it to subscribers
+                    async_dispatcher_send(
+                        self.hass,
+                        f"checkwatt_{self._id}_fcrd",
+                        signal_payload,
+                    )
+
+                    # Update self to discover next change
+                    self.fcrd_state = new
+                    self.fcrd_percentage = cw_inst.fcrd_percentage
+                    self.fcrd_timestamp = cw_inst.fcrd_timestamp
 
                 return resp
 

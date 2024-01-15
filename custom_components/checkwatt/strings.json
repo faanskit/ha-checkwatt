@@ -170,6 +170,19 @@
                     }
                 }
             }
+        },
+        "event": {
+            "fcr_d_event": {
+                "name": "FCR-D State",
+                "state_attributes": {
+                    "event_type": {
+                        "state": {
+                            "fcrd_activated": "Activated",
+                            "fcrd_deactivated": "Deactivated"
+                        }
+                    }
+                }
+            }
         }
     }
 }
