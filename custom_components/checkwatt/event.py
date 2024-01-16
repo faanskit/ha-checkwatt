@@ -12,7 +12,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import CheckwattCoordinator, CheckwattResp
-from .const import ATTRIBUTION, CHECKWATT_MODEL, DOMAIN, MANUFACTURER
+from .const import ATTRIBUTION, CHECKWATT_MODEL, DOMAIN, EVENT_SIGNAL_FCRD, MANUFACTURER
 
 EVENT_FCRD_ACTIVATED = "fcrd_activated"
 EVENT_FCRD_DEACTIVATED = "fcrd_deactivated"
@@ -92,28 +92,56 @@ class CheckWattFCRDEvent(AbstractCheckwattEvent):
     ) -> None:
         """Initialize the CheckWatt event entity."""
         super().__init__(coordinator=coordinator, description=description)
+        self._coordinator = coordinator
 
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
         super().async_added_to_hass()
         self.async_on_remove(
             async_dispatcher_connect(
-                self.hass, f"checkwatt_{self._id}_fcrd", self.handle_event
-            )
+                self.hass,
+                f"checkwatt_{self._id}_signal",
+                self.handle_event,
+            ),
         )
 
-    @callback
-    def handle_event(self, signal_payload) -> None:
-        """Handle received event."""
-        event = None
-        if "new_fcrd" in signal_payload and "state" in signal_payload["new_fcrd"]:
-            if signal_payload["new_fcrd"]["state"] == "ACTIVATED":
+        # Send the status upon boot
+        if "fcr_d_status" in self._coordinator.data:
+            event = None
+            if self._coordinator.data["fcr_d_status"] == "ACTIVATED":
                 event = EVENT_FCRD_ACTIVATED
-            elif signal_payload["new_fcrd"]["state"] == "DEACTIVATE":
+            elif self._coordinator.data["fcr_d_status"] == "DEACTIVATE":
                 event = EVENT_FCRD_DEACTIVATED
 
             if event is not None:
                 self._trigger_event(event)
                 self.async_write_ha_state()
+
+    @callback
+    def handle_event(self, signal_payload) -> None:
+        """Handle received event."""
+        event = None
+        if "signal" in signal_payload and signal_payload["signal"] == EVENT_SIGNAL_FCRD:
+            if (
+                "new_fcrd" in signal_payload["data"]
+                and "state" in signal_payload["data"]["new_fcrd"]
+            ):
+                if signal_payload["data"]["new_fcrd"]["state"] == "ACTIVATED":
+                    event = EVENT_FCRD_ACTIVATED
+                elif signal_payload["data"]["new_fcrd"]["state"] == "DEACTIVATE":
+                    event = EVENT_FCRD_DEACTIVATED
+            else:
+                _LOGGER.error(
+                    "Signal %s payload did not include correct data", EVENT_SIGNAL_FCRD
+                )
+
+        # Add additional signals and events here
+        # Eg:
+        # elif signal_payload["signal"] == EVENT_SIGNAL_NEW
+
         else:
-            _LOGGER.error("Signal payload did not include correct data")
+            _LOGGER.error("Signal did not include a known signal")
+
+        if event is not None:
+            self._trigger_event(event)
+            self.async_write_ha_state()

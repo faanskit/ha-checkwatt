@@ -19,11 +19,13 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from homeassistant.util import dt as dt_util
 
 from .const import (
+    BASIC_TEST,
     CONF_DETAILED_SENSORS,
     CONF_PUSH_CW_TO_RANK,
     CONF_UPDATE_INTERVAL,
     CONF_UPDATE_INTERVAL_FCRD,
     DOMAIN,
+    EVENT_SIGNAL_FCRD,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -132,7 +134,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
         """Return entry ID."""
         return self._entry.entry_id
 
-    async def _async_update_data(self) -> CheckwattResp:
+    async def _async_update_data(self) -> CheckwattResp:  # noqa: C901
         """Fetch the latest data from the source."""
 
         try:
@@ -269,29 +271,42 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     resp["price_zone"] = cw_inst.price_zone
 
                 # Check if FCR-D State has changed and dispatch it ACTIVATED/ DEACTIVATED
-                if self.fcrd_state != cw_inst.fcrd_state:
+                old_state = self.fcrd_state
+                new_state = cw_inst.fcrd_state
+
+                # During test, toggle (every minute)
+                if BASIC_TEST is True:
+                    if old_state == "ACTIVATED":
+                        new_state = "DEACTIVATE"
+                    if old_state == "DEACTIVATE":
+                        new_state = "fcrd_state"
+
+                if old_state != new_state:
                     signal_payload = {
-                        "current_fcrd": {
-                            "state": self.fcrd_state,
-                            "status": self.fcrd_percentage,
-                            "date": self.fcrd_timestamp,
-                        },
-                        "new_fcrd": {
-                            "state": cw_inst.fcrd_state,
-                            "status": cw_inst.fcrd_percentage,
-                            "date": cw_inst.fcrd_timestamp,
+                        "signal": EVENT_SIGNAL_FCRD,
+                        "data": {
+                            "current_fcrd": {
+                                "state": old_state,
+                                "status": self.fcrd_percentage,
+                                "date": self.fcrd_timestamp,
+                            },
+                            "new_fcrd": {
+                                "state": new_state,
+                                "status": cw_inst.fcrd_percentage,
+                                "date": cw_inst.fcrd_timestamp,
+                            },
                         },
                     }
 
                     # Dispatch it to subscribers
                     async_dispatcher_send(
                         self.hass,
-                        f"checkwatt_{self._id}_fcrd",
+                        f"checkwatt_{self._id}_signal",
                         signal_payload,
                     )
 
                     # Update self to discover next change
-                    self.fcrd_state = cw_inst.fcrd_state
+                    self.fcrd_state = new_state
                     self.fcrd_percentage = cw_inst.fcrd_percentage
                     self.fcrd_timestamp = cw_inst.fcrd_timestamp
 
@@ -314,8 +329,6 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     "Content-Type": "application/json",
                 }
                 payload = {
-                    "display_name": cw_inst.customer_details["Meter"][0]["DisplayName"],
-                    # "display_name": "xxTESTxx",
                     "dso": cw_inst.battery_registration["Dso"],
                     "electricity_company": self.energy_provider,
                     "electricity_area": cw_inst.price_zone,
@@ -325,6 +338,12 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     "today_net_income": self.today_revenue - self.today_fees,
                     "reseller_id": cw_inst.customer_details["Meter"][0]["ResellerId"],
                 }
+                if BASIC_TEST:
+                    payload["display_name"] = "xxTESTxx"
+                else:
+                    payload["display_name"] = cw_inst.customer_details["Meter"][0][
+                        "DisplayName"
+                    ]
 
                 # Specify a timeout value (in seconds)
                 timeout_seconds = 10

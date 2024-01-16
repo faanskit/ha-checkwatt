@@ -141,6 +141,30 @@ The final result can look like this:
 
 ![checkwatt main](/images/ha_main.png)
 
+## Events
+The integration publish [events](https://www.home-assistant.io/integrations/event/) which cabe be used to drive automations.
+
+Below is a sample of an automation that acts when CheckWatt fails to engage your battery and deactivates it.
+
+```yaml
+alias: Deactivated
+description: ""
+trigger:
+  - platform: state
+    entity_id:
+      - event.skarfva_fcr_d_state
+    attribute: event_type
+    from: fcrd_activated
+    to: fcrd_deactivated
+condition: []
+action:
+  - service: notify.faanskit
+    data:
+      message: "CheckWatt failed, please investigate."
+mode: single
+```
+
+
 # Expert Section
 If you think that some of the attributes provided should be sensors, please consider to use [Templates](https://www.home-assistant.io/docs/configuration/templating/) before you register it as an [issue](https://github.com/faanskit/ha-checkwatt/issues). If it can be done via a Template Sensor, it will most likely be rejected.
 
