@@ -18,6 +18,9 @@ CONF_PUSH_CW_TO_RANK: Final = "push_to_cw_rank"
 # Misc
 P_UNKNOWN = "Unknown"
 
+# Temp Test
+BASIC_TEST = False
+
 # CheckWatt Sensor Attributes
 # NOTE Keep these names aligned with strings.json
 #
@@ -49,3 +52,6 @@ C_TOMORROW_NET = "tomorrow_net_income"
 C_UPDATE_TIME = "last_update"
 C_VAT = "vat"
 C_ZIP = "zip_code"
+
+# CheckWatt Event Signals
+EVENT_SIGNAL_FCRD = "fcrd"

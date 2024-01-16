@@ -170,6 +170,19 @@
                     }
                 }
             }
+        },
+        "event": {
+            "fcr_d_event": {
+                "name": "FCR-D Status",
+                "state_attributes": {
+                    "event_type": {
+                        "state": {
+                            "fcrd_activated": "Aktiverad",
+                            "fcrd_deactivated": "Deaktiverad"
+                        }
+                    }
+                }
+            }
         }
     }
 }

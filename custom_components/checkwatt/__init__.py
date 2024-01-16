@@ -14,20 +14,23 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
 from .const import (
+    BASIC_TEST,
     CONF_DETAILED_SENSORS,
     CONF_PUSH_CW_TO_RANK,
     CONF_UPDATE_INTERVAL,
     CONF_UPDATE_INTERVAL_FCRD,
     DOMAIN,
+    EVENT_SIGNAL_FCRD,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = [Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.EVENT]
 
 
 class CheckwattResp(TypedDict):
@@ -120,6 +123,10 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
         self.is_boot = True
         self.energy_provider = None
         self.random_offset = random.randint(0, 14)
+        self.fcrd_state = None
+        self.fcrd_percentage = None
+        self.fcrd_timestamp = None
+        self._id = None
         _LOGGER.debug("Fetching annual revenue at 3:%02d am", self.random_offset)
 
     @property
@@ -127,7 +134,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
         """Return entry ID."""
         return self._entry.entry_id
 
-    async def _async_update_data(self) -> CheckwattResp:
+    async def _async_update_data(self) -> CheckwattResp:  # noqa: C901
         """Fetch the latest data from the source."""
 
         try:
@@ -159,6 +166,13 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                         self.energy_provider = await cw_inst.get_energy_trading_company(
                             cw_inst.customer_details["Meter"][0]["ElhandelsbolagId"]
                         )
+
+                    # Store fcrd_state at boot, used to spark event
+                    self.fcrd_state = cw_inst.fcrd_state
+                    self.fcrd_percentage = cw_inst.fcrd_percentage
+                    self.fcrd_timestamp = cw_inst.fcrd_timestamp
+                    self._id = cw_inst.customer_details["Id"]
+
                 else:
                     if self.update_monetary == 0:
                         _LOGGER.debug("Fetching FCR-D data from CheckWatt")
@@ -256,6 +270,46 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     resp["spot_price"] = cw_inst.get_spot_price_excl_vat(time_hour)
                     resp["price_zone"] = cw_inst.price_zone
 
+                # Check if FCR-D State has changed and dispatch it ACTIVATED/ DEACTIVATED
+                old_state = self.fcrd_state
+                new_state = cw_inst.fcrd_state
+
+                # During test, toggle (every minute)
+                if BASIC_TEST is True:
+                    if old_state == "ACTIVATED":
+                        new_state = "DEACTIVATE"
+                    if old_state == "DEACTIVATE":
+                        new_state = "ACTIVATED"
+
+                if old_state != new_state:
+                    signal_payload = {
+                        "signal": EVENT_SIGNAL_FCRD,
+                        "data": {
+                            "current_fcrd": {
+                                "state": old_state,
+                                "status": self.fcrd_percentage,
+                                "date": self.fcrd_timestamp,
+                            },
+                            "new_fcrd": {
+                                "state": new_state,
+                                "status": cw_inst.fcrd_percentage,
+                                "date": cw_inst.fcrd_timestamp,
+                            },
+                        },
+                    }
+
+                    # Dispatch it to subscribers
+                    async_dispatcher_send(
+                        self.hass,
+                        f"checkwatt_{self._id}_signal",
+                        signal_payload,
+                    )
+
+                    # Update self to discover next change
+                    self.fcrd_state = new_state
+                    self.fcrd_percentage = cw_inst.fcrd_percentage
+                    self.fcrd_timestamp = cw_inst.fcrd_timestamp
+
                 return resp
 
         except InvalidAuth as err:
@@ -275,8 +329,6 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     "Content-Type": "application/json",
                 }
                 payload = {
-                    "display_name": cw_inst.customer_details["Meter"][0]["DisplayName"],
-                    # "display_name": "xxTESTxx",
                     "dso": cw_inst.battery_registration["Dso"],
                     "electricity_company": self.energy_provider,
                     "electricity_area": cw_inst.price_zone,
@@ -286,6 +338,12 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     "today_net_income": self.today_revenue - self.today_fees,
                     "reseller_id": cw_inst.customer_details["Meter"][0]["ResellerId"],
                 }
+                if BASIC_TEST:
+                    payload["display_name"] = "xxTESTxx"
+                else:
+                    payload["display_name"] = cw_inst.customer_details["Meter"][0][
+                        "DisplayName"
+                    ]
 
                 # Specify a timeout value (in seconds)
                 timeout_seconds = 10
