@@ -54,5 +54,4 @@ C_VAT = "vat"
 C_ZIP = "zip_code"
 
 # CheckWatt Event Signals
-EVENT_SIGNAL = "signal"
 EVENT_SIGNAL_FCRD = "fcrd"

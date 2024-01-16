@@ -279,7 +279,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     if old_state == "ACTIVATED":
                         new_state = "DEACTIVATE"
                     if old_state == "DEACTIVATE":
-                        new_state = "fcrd_state"
+                        new_state = "ACTIVATED"
 
                 if old_state != new_state:
                     signal_payload = {
