@@ -142,7 +142,7 @@ The final result can look like this:
 ![checkwatt main](/images/ha_main.png)
 
 ## Events
-The integration publish [events](https://www.home-assistant.io/integrations/event/) which cabe be used to drive automations.
+The integration publish [events](https://www.home-assistant.io/integrations/event/) which can be be used to drive automations.
 
 Below is a sample of an automation that acts when CheckWatt fails to engage your battery and deactivates it.
 
