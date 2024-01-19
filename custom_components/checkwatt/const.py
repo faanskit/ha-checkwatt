@@ -2,6 +2,7 @@
 from typing import Final
 
 DOMAIN = "checkwatt"
+INTEGRATION_NAME = "ha-checkwatt"
 
 # Update interval for regular sensors is once every minute
 # For FCR-D since it is slow and resource consuming, is set to once per 15 minute

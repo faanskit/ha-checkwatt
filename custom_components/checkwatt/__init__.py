@@ -26,6 +26,7 @@ from .const import (
     CONF_UPDATE_INTERVAL_FCRD,
     DOMAIN,
     EVENT_SIGNAL_FCRD,
+    INTEGRATION_NAME,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -143,7 +144,9 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
             use_detailed_sensors = self._entry.options.get(CONF_DETAILED_SENSORS)
             push_to_cw_rank = self._entry.options.get(CONF_PUSH_CW_TO_RANK)
 
-            async with CheckwattManager(username, password) as cw_inst:
+            async with CheckwattManager(
+                username, password, INTEGRATION_NAME
+            ) as cw_inst:
                 if not await cw_inst.login():
                     _LOGGER.error("Failed to login, abort update")
                     raise UpdateFailed("Failed to login")
