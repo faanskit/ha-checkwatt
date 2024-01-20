@@ -27,6 +27,9 @@ from .const import (
     C_BATTERY_POWER,
     C_CHARGE_PEAK,
     C_CITY,
+    C_CM10_STATUS_DATE,
+    C_CM10_UNDER_TEST,
+    C_CM10_VERSION,
     C_DISCHARGE_PEAK,
     C_DISPLAY_NAME,
     C_DSO,
@@ -85,6 +88,11 @@ CHECKWATT_MONETARY_SENSORS: dict[str, SensorEntityDescription] = {
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         translation_key="battery_soc_sensor",
+    ),
+    "cm10": SensorEntityDescription(
+        key="cm10",
+        name="CheckWatt CM10 Status",
+        translation_key="cm10_sensor",
     ),
 }
 
@@ -182,6 +190,8 @@ async def async_setup_entry(
             )
         elif key == "battery":
             entities.append(CheckwattBatterySoCSensor(coordinator, description))
+        elif key == "cm10":
+            entities.append(CheckwattCM10Sensor(coordinator, description))
 
     if use_detailed_sensors:
         _LOGGER.debug(
@@ -682,3 +692,58 @@ class CheckwattBatterySoCSensor(AbstractCheckwattSensor):
     def native_value(self) -> str | None:
         """Get the latest state value."""
         return self._coordinator.data["battery_soc"]
+
+
+class CheckwattCM10Sensor(AbstractCheckwattSensor):
+    """Representation of a CheckWatt CM10 sensor."""
+
+    def __init__(
+        self,
+        coordinator: CheckwattCoordinator,
+        description: SensorEntityDescription,
+    ) -> None:
+        """Initialize the sensor."""
+        _LOGGER.debug("Creating %s sensor", description.name)
+        super().__init__(coordinator=coordinator, description=description)
+
+    async def async_update(self) -> None:
+        """Get the latest data and updates the states."""
+        if "cm10_version" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_CM10_VERSION: self._coordinator.data["cm10_version"]}
+            )
+        if "cm10_under_test" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_CM10_UNDER_TEST: self._coordinator.data["cm10_under_test"]}
+            )
+        if "cm10_status_date" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_CM10_STATUS_DATE: self._coordinator.data["cm10_status_date"]}
+            )
+        self._attr_available = True
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Get the latest data and updates the states."""
+        if "cm10_status" in self._coordinator.data:
+            self._attr_native_value = self._coordinator.data["cm10_status"]
+        if "cm10_version" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_CM10_VERSION: self._coordinator.data["cm10_version"]}
+            )
+        if "cm10_under_test" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_CM10_UNDER_TEST: self._coordinator.data["cm10_under_test"]}
+            )
+        if "cm10_status_date" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_CM10_STATUS_DATE: self._coordinator.data["cm10_status_date"]}
+            )
+        super()._handle_coordinator_update()
+
+    @property
+    def native_value(self) -> str | None:
+        """Get the latest state value."""
+        if "cm10_status" in self._coordinator.data:
+            return self._coordinator.data["cm10_status"]
+        return None

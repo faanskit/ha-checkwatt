@@ -169,6 +169,20 @@
                         "name": "Solcellseffekt"
                     }
                 }
+            },
+            "cm10_sensor": {
+                "name": "CM10 Status",
+                "state_attributes": {
+                    "cm10_version": {
+                        "name": "Version"
+                    },
+                    "cm10_under_test": {
+                        "name": "Test pågår"
+                    },
+                    "cm10_status_date": {
+                        "name": "Statusdatum"
+                    }
+                }
             }
         },
         "event": {

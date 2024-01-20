@@ -70,6 +70,10 @@ class CheckwattResp(TypedDict):
     battery_soc: float
     dso: str
     energy_provider: str
+    cm10_status: str
+    cm10_version: str
+    cm10_under_test: bool
+    cm10_status_date: str
 
 
 async def update_listener(hass: HomeAssistant, entry):
@@ -153,6 +157,9 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                 if not await cw_inst.get_customer_details():
                     _LOGGER.error("Failed to obtain customer details, abort update")
                     raise UpdateFailed("Unknown error get_customer_details")
+                if not await cw_inst.get_meter_status():
+                    _LOGGER.error("Failed to obtain meter details, abort update")
+                    raise UpdateFailed("Unknown error get_meter_status")
                 if not await cw_inst.get_energy_flow():
                     _LOGGER.error("Failed to get energy flows, abort update")
                     raise UpdateFailed("Unknown error get_energy_flow")
@@ -272,6 +279,12 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     time_hour = int(dt_util.now().strftime("%H"))
                     resp["spot_price"] = cw_inst.get_spot_price_excl_vat(time_hour)
                     resp["price_zone"] = cw_inst.price_zone
+
+                if cw_inst.meter_data is not None:
+                    resp["cm10_status"] = cw_inst.meter_status
+                    resp["cm10_version"] = cw_inst.meter_version
+                    resp["cm10_under_test"] = cw_inst.meter_under_test
+                    resp["cm10_status_date"] = cw_inst.meter_status_date
 
                 # Check if FCR-D State has changed and dispatch it ACTIVATED/ DEACTIVATED
                 old_state = self.fcrd_state
