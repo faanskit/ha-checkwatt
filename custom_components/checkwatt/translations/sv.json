@@ -168,7 +168,20 @@
                     },
                     "solar_power": {
                         "name": "Solcellseffekt"
+                    },
+                    "charge_peak_ac": {
+                        "name": "Laddningstopp AC"
+                    },
+                    "charge_peak_dc": {
+                        "name": "Laddningstopp DC"
+                    },
+                    "discharge_peak_ac": {
+                        "name": "Urladdningstopp AC"
+                    },
+                    "discharge_peak_dc": {
+                        "name": "Urladdningstopp DC"
                     }
+
                 }
             },
             "cm10_sensor": {

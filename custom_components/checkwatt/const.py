@@ -57,6 +57,11 @@ C_TOMORROW_NET = "tomorrow_net_income"
 C_UPDATE_TIME = "last_update"
 C_VAT = "vat"
 C_ZIP = "zip_code"
+C_CHARGE_PEAK_AC = "charge_peak_ac"
+C_CHARGE_PEAK_DC = "charge_peak_dc"
+C_DISCHARGE_PEAK_AC = "discharge_peak_ac"
+C_DISCHARGE_PEAK_DC = "discharge_peak_dc"
+
 
 # CheckWatt Event Signals
 EVENT_SIGNAL_FCRD = "fcrd"

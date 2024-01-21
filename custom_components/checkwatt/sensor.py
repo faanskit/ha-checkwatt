@@ -26,11 +26,15 @@ from .const import (
     C_ANNUAL_GROSS,
     C_BATTERY_POWER,
     C_CHARGE_PEAK,
+    C_CHARGE_PEAK_AC,
+    C_CHARGE_PEAK_DC,
     C_CITY,
     C_CM10_STATUS_DATE,
     C_CM10_UNDER_TEST,
     C_CM10_VERSION,
     C_DISCHARGE_PEAK,
+    C_DISCHARGE_PEAK_AC,
+    C_DISCHARGE_PEAK_DC,
     C_DISPLAY_NAME,
     C_DSO,
     C_ENERGY_PROVIDER,
@@ -93,6 +97,7 @@ CHECKWATT_MONETARY_SENSORS: dict[str, SensorEntityDescription] = {
     "cm10": SensorEntityDescription(
         key="cm10",
         name="CheckWatt CM10 Status",
+        icon="mdi:raspberry-pi",
         translation_key="cm10_sensor",
     ),
 }
@@ -669,6 +674,22 @@ class CheckwattBatterySoCSensor(AbstractCheckwattSensor):
             self._attr_extra_state_attributes.update(
                 {C_SOLAR_POWER: self._coordinator.data["solar_power"]}
             )
+        if "charge_peak_ac" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_CHARGE_PEAK_AC: self._coordinator.data["charge_peak_ac"]}
+            )
+        if "charge_peak_dc" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_CHARGE_PEAK_DC: self._coordinator.data["charge_peak_dc"]}
+            )
+        if "discharge_peak_ac" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_DISCHARGE_PEAK_AC: self._coordinator.data["discharge_peak_ac"]}
+            )
+        if "discharge_peak_dc" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_DISCHARGE_PEAK_DC: self._coordinator.data["discharge_peak_dc"]}
+            )
         self._attr_available = True
 
     @callback
@@ -687,6 +708,22 @@ class CheckwattBatterySoCSensor(AbstractCheckwattSensor):
         if "solar_power" in self._coordinator.data:
             self._attr_extra_state_attributes.update(
                 {C_SOLAR_POWER: self._coordinator.data["solar_power"]}
+            )
+        if "charge_peak_ac" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_CHARGE_PEAK_AC: self._coordinator.data["charge_peak_ac"]}
+            )
+        if "charge_peak_dc" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_CHARGE_PEAK_DC: self._coordinator.data["charge_peak_dc"]}
+            )
+        if "discharge_peak_ac" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_DISCHARGE_PEAK_AC: self._coordinator.data["discharge_peak_ac"]}
+            )
+        if "discharge_peak_dc" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_DISCHARGE_PEAK_DC: self._coordinator.data["discharge_peak_dc"]}
             )
         super()._handle_coordinator_update()
 

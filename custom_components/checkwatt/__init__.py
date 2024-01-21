@@ -75,6 +75,10 @@ class CheckwattResp(TypedDict):
     cm10_version: str
     cm10_under_test: bool
     cm10_status_date: str
+    charge_peak_ac: float
+    charge_peak_dc: float
+    discharge_peak_ac: float
+    discharge_peak_dc: float
 
 
 async def update_listener(hass: HomeAssistant, entry):
@@ -101,6 +105,34 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[DOMAIN].pop(entry.entry_id)
 
     return unload_ok
+
+
+async def getPeakData(cw_inst):
+    """Extract PeakAcDC Power."""
+    charge_peak_ac = 0
+    charge_peak_dc = 0
+    discharge_peak_ac = 0
+    discharge_peak_dc = 0
+
+    if cw_inst is None:
+        return (None, None, None, None)
+
+    if cw_inst.customer_details is None:
+        return (None, None, None, None)
+
+    if "Meter" in cw_inst.customer_details:
+        for meter in cw_inst.customer_details["Meter"]:
+            if "InstallationType" in meter:
+                if meter["InstallationType"] == "Charging":
+                    if "PeakAcKw" in meter and "PeakDcKw" in meter:
+                        charge_peak_ac += meter["PeakAcKw"]
+                        charge_peak_dc += meter["PeakDcKw"]
+                if meter["InstallationType"] == "Discharging":
+                    if "PeakAcKw" in meter and "PeakDcKw" in meter:
+                        discharge_peak_ac += meter["PeakAcKw"]
+                        discharge_peak_dc += meter["PeakDcKw"]
+
+    return (charge_peak_ac, charge_peak_dc, discharge_peak_ac, discharge_peak_dc)
 
 
 class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
@@ -264,6 +296,16 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     resp["grid_power"] = cw_inst.grid_power
                     resp["solar_power"] = cw_inst.solar_power
                     resp["battery_soc"] = cw_inst.battery_soc
+                    (
+                        charge_peak_ac,
+                        charge_peak_dc,
+                        discharge_peak_ac,
+                        discharge_peak_dc,
+                    ) = await getPeakData(cw_inst)
+                    resp["charge_peak_ac"] = charge_peak_ac
+                    resp["charge_peak_dc"] = charge_peak_dc
+                    resp["discharge_peak_ac"] = discharge_peak_ac
+                    resp["discharge_peak_dc"] = discharge_peak_dc
 
                 # Use self stored variant of revenue parameters as they are not always fetched
                 if self.today_revenue is not None:

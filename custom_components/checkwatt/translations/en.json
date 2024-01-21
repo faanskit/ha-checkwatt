@@ -168,6 +168,18 @@
                     },
                     "solar_power": {
                         "name": "Solar Power"
+                    },
+                    "charge_peak_ac": {
+                        "name": "Charge Peak AC"
+                    },
+                    "charge_peak_dc": {
+                        "name": "Charge Peak DC"
+                    },
+                    "discharge_peak_ac": {
+                        "name": "Discharge Peak AC"
+                    },
+                    "discharge_peak_dc": {
+                        "name": "Discharge Peak DC"
                     }
                 }
             },
