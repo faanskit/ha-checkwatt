@@ -728,7 +728,11 @@ class CheckwattCM10Sensor(AbstractCheckwattSensor):
     def _handle_coordinator_update(self) -> None:
         """Get the latest data and updates the states."""
         if "cm10_status" in self._coordinator.data:
-            self._attr_native_value = self._coordinator.data["cm10_status"]
+            cm10_status = self._coordinator.data["cm10_status"]
+            if cm10_status is not None:
+                self._attr_native_value = cm10_status.capitalize()
+            else:
+                self._attr_native_value = None
         if "cm10_version" in self._coordinator.data:
             self._attr_extra_state_attributes.update(
                 {C_CM10_VERSION: self._coordinator.data["cm10_version"]}
@@ -747,5 +751,7 @@ class CheckwattCM10Sensor(AbstractCheckwattSensor):
     def native_value(self) -> str | None:
         """Get the latest state value."""
         if "cm10_status" in self._coordinator.data:
-            return self._coordinator.data["cm10_status"]
+            cm10_status = self._coordinator.data["cm10_status"]
+            if cm10_status is not None:
+                return cm10_status.capitalize()
         return None

@@ -172,7 +172,7 @@
                 }
             },
             "cm10_sensor": {
-                "name": "CM10 Status",
+                "name": "CheckWatt CM10 Status",
                 "state_attributes": {
                     "cm10_version": {
                         "name": "Version"

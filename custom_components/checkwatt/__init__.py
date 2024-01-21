@@ -133,6 +133,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
         self.fcrd_percentage = None
         self.fcrd_timestamp = None
         self._id = None
+        self.update_no = 0
         _LOGGER.debug("Fetching annual revenue at 3:%02d am", self.random_offset)
 
     @property
@@ -159,17 +160,20 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                 if not await cw_inst.get_customer_details():
                     _LOGGER.error("Failed to obtain customer details, abort update")
                     raise UpdateFailed("Unknown error get_customer_details")
-                if not await cw_inst.get_meter_status():
-                    _LOGGER.error("Failed to obtain meter details, abort update")
-                    raise UpdateFailed("Unknown error get_meter_status")
+                if use_cm10_sensor:
+                    if not await cw_inst.get_meter_status():
+                        _LOGGER.error("Failed to obtain meter details, abort update")
+                        raise UpdateFailed("Unknown error get_meter_status")
                 if not await cw_inst.get_energy_flow():
                     _LOGGER.error("Failed to get energy flows, abort update")
                     raise UpdateFailed("Unknown error get_energy_flow")
 
                 # Prevent slow funcion to be called at boot.
                 # The revenue sensors will be updated after ca 1 min
-                if self.is_boot:
+                self.update_no += 1
+                if self.update_no > 2:
                     self.is_boot = False
+                if self.is_boot:
                     if (
                         "Meter" in cw_inst.customer_details
                         and len(cw_inst.customer_details["Meter"]) > 0
