@@ -20,6 +20,7 @@ from homeassistant.util import dt as dt_util
 
 from .const import (
     BASIC_TEST,
+    CONF_CM10_SENSOR,
     CONF_DETAILED_SENSORS,
     CONF_PUSH_CW_TO_RANK,
     CONF_UPDATE_INTERVAL,
@@ -147,6 +148,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
             password = self._entry.data.get(CONF_PASSWORD)
             use_detailed_sensors = self._entry.options.get(CONF_DETAILED_SENSORS)
             push_to_cw_rank = self._entry.options.get(CONF_PUSH_CW_TO_RANK)
+            use_cm10_sensor = self._entry.options.get(CONF_CM10_SENSOR)
 
             async with CheckwattManager(
                 username, password, INTEGRATION_NAME
@@ -280,7 +282,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     resp["spot_price"] = cw_inst.get_spot_price_excl_vat(time_hour)
                     resp["price_zone"] = cw_inst.price_zone
 
-                if cw_inst.meter_data is not None:
+                if cw_inst.meter_data is not None and use_cm10_sensor:
                     resp["cm10_status"] = cw_inst.meter_status
                     resp["cm10_version"] = cw_inst.meter_version
                     resp["cm10_under_test"] = cw_inst.meter_under_test

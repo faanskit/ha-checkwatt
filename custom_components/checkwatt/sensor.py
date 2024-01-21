@@ -52,6 +52,7 @@ from .const import (
     C_VAT,
     C_ZIP,
     CHECKWATT_MODEL,
+    CONF_CM10_SENSOR,
     CONF_DETAILED_ATTRIBUTES,
     CONF_DETAILED_SENSORS,
     DOMAIN,
@@ -177,6 +178,7 @@ async def async_setup_entry(
     checkwatt_data: CheckwattResp = coordinator.data
     use_detailed_sensors = entry.options.get(CONF_DETAILED_SENSORS)
     use_detailed_attributes = entry.options.get(CONF_DETAILED_ATTRIBUTES)
+    use_cm10_sensor = entry.options.get(CONF_CM10_SENSOR)
 
     _LOGGER.debug("Setting up CheckWatt sensor for %s", checkwatt_data["display_name"])
     for key, description in CHECKWATT_MONETARY_SENSORS.items():
@@ -190,7 +192,7 @@ async def async_setup_entry(
             )
         elif key == "battery":
             entities.append(CheckwattBatterySoCSensor(coordinator, description))
-        elif key == "cm10":
+        elif key == "cm10" and use_cm10_sensor:
             entities.append(CheckwattCM10Sensor(coordinator, description))
 
     if use_detailed_sensors:

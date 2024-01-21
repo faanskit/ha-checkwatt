@@ -15,6 +15,7 @@ CHECKWATT_MODEL = "CheckWatt"
 CONF_DETAILED_SENSORS: Final = "show_details"
 CONF_DETAILED_ATTRIBUTES: Final = "show_detailed_attributes"
 CONF_PUSH_CW_TO_RANK: Final = "push_to_cw_rank"
+CONF_CM10_SENSOR = "cm10_sensor"
 
 # Misc
 P_UNKNOWN = "Unknown"
