@@ -5,6 +5,7 @@ import asyncio
 from datetime import time, timedelta
 import logging
 import random
+import re
 from typing import TypedDict
 
 import aiohttp
@@ -133,6 +134,42 @@ async def getPeakData(cw_inst):
                         discharge_peak_dc += meter["PeakDcKw"]
 
     return (charge_peak_ac, charge_peak_dc, discharge_peak_ac, discharge_peak_dc)
+
+
+def extract_cm10_status(cw_inst):
+    """Extract status from data and logbook."""
+    fcrd_state = None
+    meter_status = None
+
+    if cw_inst.customer_details is None:
+        return None
+
+    if cw_inst.meter_data is None:
+        return None
+
+    meter_status = cw_inst.meter_status
+    if meter_status == "offline":
+        return "Offline"
+
+    if meter_status != "producing":
+        return None
+
+    pattern = re.compile(r"\[ FCR-D (ACTIVATED|DEACTIVATE|FAIL ACTIVATION) \]")
+    for entry in cw_inst.logbook_entries:
+        match = pattern.search(entry)
+        if match:
+            fcrd_state = match.group(1)
+            if fcrd_state == "ACTIVATED":
+                return "Active"
+            if fcrd_state == "DEACTIVATE":
+                return "Failed FCR-D"
+            if fcrd_state == "FAIL ACTIVATION":
+                return "Failed test"
+
+    if cw_inst.meter_under_test:
+        return "Test pending"
+
+    return None
 
 
 class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
@@ -329,7 +366,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     resp["price_zone"] = cw_inst.price_zone
 
                 if cw_inst.meter_data is not None and use_cm10_sensor:
-                    resp["cm10_status"] = cw_inst.meter_status
+                    resp["cm10_status"] = extract_cm10_status(cw_inst)
                     resp["cm10_version"] = cw_inst.meter_version
                     resp["cm10_under_test"] = cw_inst.meter_under_test
                     resp["cm10_status_date"] = cw_inst.meter_status_date
