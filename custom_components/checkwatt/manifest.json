@@ -14,6 +14,6 @@
   "issue_tracker": "https://github.com/faanskit/ha-checkwatt/issues",
   "requirements": ["pycheckwatt>=0.1.10", "aiohttp>=3.9.1"],
   "ssdp": [],
-  "version": "0.1.5",
+  "version": "0.1.7",
   "zeroconf": []
 }
