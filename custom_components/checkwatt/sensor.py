@@ -39,7 +39,7 @@ from .const import (
     C_DSO,
     C_ENERGY_PROVIDER,
     C_FCRD_DATE,
-    C_FCRD_STATE,
+    C_FCRD_INFO,
     C_FCRD_STATUS,
     C_GRID_POWER,
     C_NEXT_UPDATE_TIME,
@@ -333,18 +333,6 @@ class CheckwattSensor(AbstractCheckwattSensor):
                 self._attr_extra_state_attributes.update(
                     {C_NEXT_UPDATE_TIME: self._coordinator.data["next_update_time"]}
                 )
-            if "fcr_d_status" in self._coordinator.data:
-                self._attr_extra_state_attributes.update(
-                    {C_FCRD_STATUS: self._coordinator.data["fcr_d_status"]}
-                )
-            if "fcr_d_state" in self._coordinator.data:
-                self._attr_extra_state_attributes.update(
-                    {C_FCRD_STATE: self._coordinator.data["fcr_d_state"]}
-                )
-            if "fcr_d_date" in self._coordinator.data:
-                self._attr_extra_state_attributes.update(
-                    {C_FCRD_DATE: self._coordinator.data["fcr_d_date"]}
-                )
             if "battery_charge_peak" in self._coordinator.data:
                 self._attr_extra_state_attributes.update(
                     {C_CHARGE_PEAK: self._coordinator.data["battery_charge_peak"]}
@@ -411,18 +399,6 @@ class CheckwattSensor(AbstractCheckwattSensor):
             if "next_update_time" in self._coordinator.data:
                 self._attr_extra_state_attributes.update(
                     {C_NEXT_UPDATE_TIME: self._coordinator.data["next_update_time"]}
-                )
-            if "fcr_d_status" in self._coordinator.data:
-                self._attr_extra_state_attributes.update(
-                    {C_FCRD_STATUS: self._coordinator.data["fcr_d_status"]}
-                )
-            if "fcr_d_state" in self._coordinator.data:
-                self._attr_extra_state_attributes.update(
-                    {C_FCRD_STATE: self._coordinator.data["fcr_d_state"]}
-                )
-            if "fcr_d_date" in self._coordinator.data:
-                self._attr_extra_state_attributes.update(
-                    {C_FCRD_DATE: self._coordinator.data["fcr_d_date"]}
                 )
             if "battery_charge_peak" in self._coordinator.data:
                 self._attr_extra_state_attributes.update(
@@ -759,6 +735,18 @@ class CheckwattCM10Sensor(AbstractCheckwattSensor):
             self._attr_extra_state_attributes.update(
                 {C_CM10_STATUS_DATE: self._coordinator.data["cm10_status_date"]}
             )
+        if "fcr_d_status" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_FCRD_STATUS: self._coordinator.data["fcr_d_status"]}
+            )
+        if "fcr_d_info" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_FCRD_INFO: self._coordinator.data["fcr_d_info"]}
+            )
+        if "fcr_d_date" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_FCRD_DATE: self._coordinator.data["fcr_d_date"]}
+            )
         self._attr_available = True
 
     @callback
@@ -781,6 +769,18 @@ class CheckwattCM10Sensor(AbstractCheckwattSensor):
         if "cm10_status_date" in self._coordinator.data:
             self._attr_extra_state_attributes.update(
                 {C_CM10_STATUS_DATE: self._coordinator.data["cm10_status_date"]}
+            )
+        if "fcr_d_status" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_FCRD_STATUS: self._coordinator.data["fcr_d_status"]}
+            )
+        if "fcr_d_info" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_FCRD_INFO: self._coordinator.data["fcr_d_info"]}
+            )
+        if "fcr_d_date" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_FCRD_DATE: self._coordinator.data["fcr_d_date"]}
             )
         super()._handle_coordinator_update()
 

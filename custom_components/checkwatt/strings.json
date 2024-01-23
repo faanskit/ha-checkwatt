@@ -83,15 +83,6 @@
                     "next_update": {
                         "name": "Next update"
                     },
-                    "fcr_d_state": {
-                        "name": "FCR-D State"
-                    },
-                    "fcr_d_status": {
-                        "name": "FCR-D Status"
-                    },
-                    "fcr_d_date": {
-                        "name": "FCR-D Date"
-                    },
                     "charge_peak": {
                         "name": "Charge Peak"
                     },
@@ -194,6 +185,15 @@
                     },
                     "cm10_status_date": {
                         "name": "Status Date"
+                    },
+                    "fcr_d_info": {
+                        "name": "FCR-D Info"
+                    },
+                    "fcr_d_status": {
+                        "name": "FCR-D Status"
+                    },
+                    "fcr_d_date": {
+                        "name": "FCR-D Date"
                     }
                 }
             }

@@ -21,7 +21,7 @@ CONF_CM10_SENSOR = "cm10_sensor"
 P_UNKNOWN = "Unknown"
 
 # Temp Test
-BASIC_TEST = False
+BASIC_TEST = True
 
 # CheckWatt Sensor Attributes
 # NOTE Keep these names aligned with strings.json
@@ -42,7 +42,7 @@ C_DSO = "dso"
 C_GRID_POWER = "grid_power"
 C_ENERGY_PROVIDER = "energy_provider"
 C_FCRD_DATE = "fcr_d_date"
-C_FCRD_STATE = "fcr_d_state"
+C_FCRD_INFO = "fcr_d_info"
 C_FCRD_STATUS = "fcr_d_status"
 C_NEXT_UPDATE_TIME = "next_update"
 C_PRICE_ZONE = "price_zone"

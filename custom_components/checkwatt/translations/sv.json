@@ -83,15 +83,6 @@
                     "next_update": {
                         "name": "Nästa uppdatering"
                     },
-                    "fcr_d_state": {
-                        "name": "FCR-D State"
-                    },
-                    "fcr_d_status": {
-                        "name": "FCR-D Status"
-                    },
-                    "fcr_d_date": {
-                        "name": "FCR-D Datum"
-                    },
                     "charge_peak": {
                         "name": "Laddningstopp"
                     },
@@ -194,7 +185,16 @@
                         "name": "Test pågår"
                     },
                     "cm10_status_date": {
-                        "name": "Statusdatum"
+                        "name": "Status Datum"
+                    },
+                    "fcr_d_info": {
+                        "name": "FCR-D Info"
+                    },
+                    "fcr_d_status": {
+                        "name": "FCR-D Status"
+                    },
+                    "fcr_d_date": {
+                        "name": "FCR-D Datum"
                     }
                 }
             }
