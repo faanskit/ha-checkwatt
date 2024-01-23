@@ -26,13 +26,18 @@ from .const import (
     C_ANNUAL_GROSS,
     C_BATTERY_POWER,
     C_CHARGE_PEAK,
+    C_CHARGE_PEAK_AC,
+    C_CHARGE_PEAK_DC,
     C_CITY,
+    C_CM10_VERSION,
     C_DISCHARGE_PEAK,
+    C_DISCHARGE_PEAK_AC,
+    C_DISCHARGE_PEAK_DC,
     C_DISPLAY_NAME,
     C_DSO,
     C_ENERGY_PROVIDER,
     C_FCRD_DATE,
-    C_FCRD_STATE,
+    C_FCRD_INFO,
     C_FCRD_STATUS,
     C_GRID_POWER,
     C_NEXT_UPDATE_TIME,
@@ -49,6 +54,7 @@ from .const import (
     C_VAT,
     C_ZIP,
     CHECKWATT_MODEL,
+    CONF_CM10_SENSOR,
     CONF_DETAILED_ATTRIBUTES,
     CONF_DETAILED_SENSORS,
     DOMAIN,
@@ -85,6 +91,12 @@ CHECKWATT_MONETARY_SENSORS: dict[str, SensorEntityDescription] = {
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         translation_key="battery_soc_sensor",
+    ),
+    "cm10": SensorEntityDescription(
+        key="cm10",
+        name="CheckWatt CM10 Status",
+        icon="mdi:raspberry-pi",
+        translation_key="cm10_sensor",
     ),
 }
 
@@ -169,6 +181,7 @@ async def async_setup_entry(
     checkwatt_data: CheckwattResp = coordinator.data
     use_detailed_sensors = entry.options.get(CONF_DETAILED_SENSORS)
     use_detailed_attributes = entry.options.get(CONF_DETAILED_ATTRIBUTES)
+    use_cm10_sensor = entry.options.get(CONF_CM10_SENSOR)
 
     _LOGGER.debug("Setting up CheckWatt sensor for %s", checkwatt_data["display_name"])
     for key, description in CHECKWATT_MONETARY_SENSORS.items():
@@ -182,6 +195,8 @@ async def async_setup_entry(
             )
         elif key == "battery":
             entities.append(CheckwattBatterySoCSensor(coordinator, description))
+        elif key == "cm10" and use_cm10_sensor:
+            entities.append(CheckwattCM10Sensor(coordinator, description))
 
     if use_detailed_sensors:
         _LOGGER.debug(
@@ -316,18 +331,6 @@ class CheckwattSensor(AbstractCheckwattSensor):
                 self._attr_extra_state_attributes.update(
                     {C_NEXT_UPDATE_TIME: self._coordinator.data["next_update_time"]}
                 )
-            if "fcr_d_status" in self._coordinator.data:
-                self._attr_extra_state_attributes.update(
-                    {C_FCRD_STATUS: self._coordinator.data["fcr_d_status"]}
-                )
-            if "fcr_d_state" in self._coordinator.data:
-                self._attr_extra_state_attributes.update(
-                    {C_FCRD_STATE: self._coordinator.data["fcr_d_state"]}
-                )
-            if "fcr_d_date" in self._coordinator.data:
-                self._attr_extra_state_attributes.update(
-                    {C_FCRD_DATE: self._coordinator.data["fcr_d_date"]}
-                )
             if "battery_charge_peak" in self._coordinator.data:
                 self._attr_extra_state_attributes.update(
                     {C_CHARGE_PEAK: self._coordinator.data["battery_charge_peak"]}
@@ -394,18 +397,6 @@ class CheckwattSensor(AbstractCheckwattSensor):
             if "next_update_time" in self._coordinator.data:
                 self._attr_extra_state_attributes.update(
                     {C_NEXT_UPDATE_TIME: self._coordinator.data["next_update_time"]}
-                )
-            if "fcr_d_status" in self._coordinator.data:
-                self._attr_extra_state_attributes.update(
-                    {C_FCRD_STATUS: self._coordinator.data["fcr_d_status"]}
-                )
-            if "fcr_d_state" in self._coordinator.data:
-                self._attr_extra_state_attributes.update(
-                    {C_FCRD_STATE: self._coordinator.data["fcr_d_state"]}
-                )
-            if "fcr_d_date" in self._coordinator.data:
-                self._attr_extra_state_attributes.update(
-                    {C_FCRD_DATE: self._coordinator.data["fcr_d_date"]}
                 )
             if "battery_charge_peak" in self._coordinator.data:
                 self._attr_extra_state_attributes.update(
@@ -657,6 +648,22 @@ class CheckwattBatterySoCSensor(AbstractCheckwattSensor):
             self._attr_extra_state_attributes.update(
                 {C_SOLAR_POWER: self._coordinator.data["solar_power"]}
             )
+        if "charge_peak_ac" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_CHARGE_PEAK_AC: self._coordinator.data["charge_peak_ac"]}
+            )
+        if "charge_peak_dc" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_CHARGE_PEAK_DC: self._coordinator.data["charge_peak_dc"]}
+            )
+        if "discharge_peak_ac" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_DISCHARGE_PEAK_AC: self._coordinator.data["discharge_peak_ac"]}
+            )
+        if "discharge_peak_dc" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_DISCHARGE_PEAK_DC: self._coordinator.data["discharge_peak_dc"]}
+            )
         self._attr_available = True
 
     @callback
@@ -676,9 +683,94 @@ class CheckwattBatterySoCSensor(AbstractCheckwattSensor):
             self._attr_extra_state_attributes.update(
                 {C_SOLAR_POWER: self._coordinator.data["solar_power"]}
             )
+        if "charge_peak_ac" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_CHARGE_PEAK_AC: self._coordinator.data["charge_peak_ac"]}
+            )
+        if "charge_peak_dc" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_CHARGE_PEAK_DC: self._coordinator.data["charge_peak_dc"]}
+            )
+        if "discharge_peak_ac" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_DISCHARGE_PEAK_AC: self._coordinator.data["discharge_peak_ac"]}
+            )
+        if "discharge_peak_dc" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_DISCHARGE_PEAK_DC: self._coordinator.data["discharge_peak_dc"]}
+            )
         super()._handle_coordinator_update()
 
     @property
     def native_value(self) -> str | None:
         """Get the latest state value."""
         return self._coordinator.data["battery_soc"]
+
+
+class CheckwattCM10Sensor(AbstractCheckwattSensor):
+    """Representation of a CheckWatt CM10 sensor."""
+
+    def __init__(
+        self,
+        coordinator: CheckwattCoordinator,
+        description: SensorEntityDescription,
+    ) -> None:
+        """Initialize the sensor."""
+        _LOGGER.debug("Creating %s sensor", description.name)
+        super().__init__(coordinator=coordinator, description=description)
+
+    async def async_update(self) -> None:
+        """Get the latest data and updates the states."""
+        if "cm10_version" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_CM10_VERSION: self._coordinator.data["cm10_version"]}
+            )
+        if "fcr_d_status" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_FCRD_STATUS: self._coordinator.data["fcr_d_status"]}
+            )
+        if "fcr_d_info" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_FCRD_INFO: self._coordinator.data["fcr_d_info"]}
+            )
+        if "fcr_d_date" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_FCRD_DATE: self._coordinator.data["fcr_d_date"]}
+            )
+        self._attr_available = True
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Get the latest data and updates the states."""
+        if "cm10_status" in self._coordinator.data:
+            cm10_status = self._coordinator.data["cm10_status"]
+            if cm10_status is not None:
+                self._attr_native_value = cm10_status.capitalize()
+            else:
+                self._attr_native_value = None
+        if "cm10_version" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_CM10_VERSION: self._coordinator.data["cm10_version"]}
+            )
+        if "fcr_d_status" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_FCRD_STATUS: self._coordinator.data["fcr_d_status"]}
+            )
+        if "fcr_d_info" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_FCRD_INFO: self._coordinator.data["fcr_d_info"]}
+            )
+        if "fcr_d_date" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_FCRD_DATE: self._coordinator.data["fcr_d_date"]}
+            )
+        super()._handle_coordinator_update()
+
+    @property
+    def native_value(self) -> str | None:
+        """Get the latest state value."""
+        if "cm10_status" in self._coordinator.data:
+            cm10_status = self._coordinator.data["cm10_status"]
+            if cm10_status is not None:
+                return cm10_status.capitalize()
+        return None

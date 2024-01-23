@@ -25,7 +25,8 @@
                 "data": {
                     "show_details": "Provide energy sensors",
                     "show_detailed_attributes": "Offer detailed attributes",
-                    "push_to_cw_rank": "Push data to CheckWattRank"
+                    "push_to_cw_rank": "Push data to CheckWattRank",
+                    "cm10_sensor": "Provide CM10 sensor"
                 },
                 "description": "Select options",
                 "title": "CheckWatt"
@@ -81,15 +82,6 @@
                     },
                     "next_update": {
                         "name": "Next update"
-                    },
-                    "fcr_d_state": {
-                        "name": "FCR-D State"
-                    },
-                    "fcr_d_status": {
-                        "name": "FCR-D Status"
-                    },
-                    "fcr_d_date": {
-                        "name": "FCR-D Date"
                     },
                     "charge_peak": {
                         "name": "Charge Peak"
@@ -167,6 +159,35 @@
                     },
                     "solar_power": {
                         "name": "Solar Power"
+                    },
+                    "charge_peak_ac": {
+                        "name": "Charge Peak AC"
+                    },
+                    "charge_peak_dc": {
+                        "name": "Charge Peak DC"
+                    },
+                    "discharge_peak_ac": {
+                        "name": "Discharge Peak AC"
+                    },
+                    "discharge_peak_dc": {
+                        "name": "Discharge Peak DC"
+                    }
+                }
+            },
+            "cm10_sensor": {
+                "name": "CheckWatt CM10 Status",
+                "state_attributes": {
+                    "cm10_version": {
+                        "name": "Version"
+                    },
+                    "fcr_d_info": {
+                        "name": "FCR-D Info"
+                    },
+                    "fcr_d_status": {
+                        "name": "FCR-D Status"
+                    },
+                    "fcr_d_date": {
+                        "name": "FCR-D Date"
                     }
                 }
             }
@@ -178,7 +199,8 @@
                     "event_type": {
                         "state": {
                             "fcrd_activated": "Activated",
-                            "fcrd_deactivated": "Deactivated"
+                            "fcrd_deactivated": "Deactivated",
+                            "fcrd_failed": "Failed"
                         }
                     }
                 }

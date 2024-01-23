@@ -16,6 +16,7 @@ from .const import ATTRIBUTION, CHECKWATT_MODEL, DOMAIN, EVENT_SIGNAL_FCRD, MANU
 
 EVENT_FCRD_ACTIVATED = "fcrd_activated"
 EVENT_FCRD_DEACTIVATED = "fcrd_deactivated"
+EVENT_FCRD_FAILED = "fcrd_failed"
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -83,7 +84,11 @@ class AbstractCheckwattEvent(CoordinatorEntity[CheckwattCoordinator], EventEntit
 class CheckWattFCRDEvent(AbstractCheckwattEvent):
     """Representation of a CheckWatt sleep event."""
 
-    _attr_event_types = [EVENT_FCRD_ACTIVATED, EVENT_FCRD_DEACTIVATED]
+    _attr_event_types = [
+        EVENT_FCRD_ACTIVATED,
+        EVENT_FCRD_DEACTIVATED,
+        EVENT_FCRD_FAILED,
+    ]
 
     def __init__(
         self,
@@ -112,6 +117,8 @@ class CheckWattFCRDEvent(AbstractCheckwattEvent):
                 event = EVENT_FCRD_ACTIVATED
             elif self._coordinator.data["fcr_d_status"] == "DEACTIVATE":
                 event = EVENT_FCRD_DEACTIVATED
+            elif self._coordinator.data["fcr_d_status"] == "FAIL ACTIVATION":
+                event = EVENT_FCRD_FAILED
 
             if event is not None:
                 self._trigger_event(event)
@@ -130,6 +137,9 @@ class CheckWattFCRDEvent(AbstractCheckwattEvent):
                     event = EVENT_FCRD_ACTIVATED
                 elif signal_payload["data"]["new_fcrd"]["state"] == "DEACTIVATE":
                     event = EVENT_FCRD_DEACTIVATED
+                elif signal_payload["data"]["new_fcrd"]["state"] == "FAIL ACTIVATION":
+                    event = EVENT_FCRD_FAILED
+
             else:
                 _LOGGER.error(
                     "Signal %s payload did not include correct data", EVENT_SIGNAL_FCRD
