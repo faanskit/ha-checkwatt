@@ -181,9 +181,6 @@
                     "cm10_version": {
                         "name": "Version"
                     },
-                    "cm10_under_test": {
-                        "name": "Test pågår"
-                    },
                     "fcr_d_info": {
                         "name": "FCR-D Info"
                     },

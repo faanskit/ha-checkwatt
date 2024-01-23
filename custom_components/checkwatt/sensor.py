@@ -29,7 +29,6 @@ from .const import (
     C_CHARGE_PEAK_AC,
     C_CHARGE_PEAK_DC,
     C_CITY,
-    C_CM10_UNDER_TEST,
     C_CM10_VERSION,
     C_DISCHARGE_PEAK,
     C_DISCHARGE_PEAK_AC,
@@ -726,10 +725,6 @@ class CheckwattCM10Sensor(AbstractCheckwattSensor):
             self._attr_extra_state_attributes.update(
                 {C_CM10_VERSION: self._coordinator.data["cm10_version"]}
             )
-        if "cm10_under_test" in self._coordinator.data:
-            self._attr_extra_state_attributes.update(
-                {C_CM10_UNDER_TEST: self._coordinator.data["cm10_under_test"]}
-            )
         if "fcr_d_status" in self._coordinator.data:
             self._attr_extra_state_attributes.update(
                 {C_FCRD_STATUS: self._coordinator.data["fcr_d_status"]}
@@ -756,10 +751,6 @@ class CheckwattCM10Sensor(AbstractCheckwattSensor):
         if "cm10_version" in self._coordinator.data:
             self._attr_extra_state_attributes.update(
                 {C_CM10_VERSION: self._coordinator.data["cm10_version"]}
-            )
-        if "cm10_under_test" in self._coordinator.data:
-            self._attr_extra_state_attributes.update(
-                {C_CM10_UNDER_TEST: self._coordinator.data["cm10_under_test"]}
             )
         if "fcr_d_status" in self._coordinator.data:
             self._attr_extra_state_attributes.update(
