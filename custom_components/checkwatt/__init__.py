@@ -138,7 +138,7 @@ def extract_fcrd_status(cw_inst):
     """Extract status from data and logbook."""
 
     if cw_inst.customer_details is None:
-        return (None, None, None, None)
+        return (None, None, None)
 
     pattern = re.compile(
         r"\[ FCR-D (ACTIVATED|DEACTIVATE|FAIL ACTIVATION) \](?:.*?(\d+,\d+/\d+,\d+/\d+,\d+ %))?(?:\s*(.*?))?(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})"
