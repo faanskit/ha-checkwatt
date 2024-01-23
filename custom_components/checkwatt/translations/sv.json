@@ -206,7 +206,8 @@
                     "event_type": {
                         "state": {
                             "fcrd_activated": "Aktiverad",
-                            "fcrd_deactivated": "Deaktiverad"
+                            "fcrd_deactivated": "Deaktiverad",
+                            "fcrd_failed": "Misslyckades"
                         }
                     }
                 }

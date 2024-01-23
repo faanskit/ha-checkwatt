@@ -205,7 +205,8 @@
                     "event_type": {
                         "state": {
                             "fcrd_activated": "Activated",
-                            "fcrd_deactivated": "Deactivated"
+                            "fcrd_deactivated": "Deactivated",
+                            "fcrd_failed": "Failed"
                         }
                     }
                 }
