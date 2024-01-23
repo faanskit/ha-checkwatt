@@ -75,7 +75,6 @@ class CheckwattResp(TypedDict):
     cm10_status: str
     cm10_version: str
     cm10_under_test: bool
-    cm10_status_date: str
     charge_peak_ac: float
     charge_peak_dc: float
     discharge_peak_ac: float
@@ -374,7 +373,6 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
 
                     resp["cm10_version"] = cw_inst.meter_version
                     resp["cm10_under_test"] = cw_inst.meter_under_test
-                    resp["cm10_status_date"] = cw_inst.meter_status_date
 
                 # Check if FCR-D State has changed and dispatch it ACTIVATED/ DEACTIVATED
                 old_state = self.fcrd_state

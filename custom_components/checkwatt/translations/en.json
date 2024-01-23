@@ -183,9 +183,6 @@
                     "cm10_under_test": {
                         "name": "Under test"
                     },
-                    "cm10_status_date": {
-                        "name": "Status Date"
-                    },
                     "fcr_d_info": {
                         "name": "FCR-D Info"
                     },
