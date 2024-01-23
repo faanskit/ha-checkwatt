@@ -21,7 +21,7 @@ CONF_CM10_SENSOR = "cm10_sensor"
 P_UNKNOWN = "Unknown"
 
 # Temp Test
-BASIC_TEST = True
+BASIC_TEST = False
 
 # CheckWatt Sensor Attributes
 # NOTE Keep these names aligned with strings.json
