@@ -24,7 +24,6 @@
             "init": {
                 "data": {
                     "show_details": "Provide energy sensors",
-                    "show_detailed_attributes": "Offer detailed attributes",
                     "push_to_cw_rank": "Push data to CheckWattRank",
                     "cm10_sensor": "Provide CM10 sensor"
                 },
@@ -56,63 +55,24 @@
                     "energy_provider": {
                         "name": "Energy Provider"
                     },
-                    "today_gross_income": {
-                        "name": "Today Gross Income"
-                    },
-                    "today_fees": {
-                        "name": "Today Fees"
-                    },
-                    "today_fees_rate": {
-                        "name": "Today Fee Rate"
-                    },
                     "tomorrow_net_income": {
                         "name": "Tomorrow Net Income"
-                    },
-                    "tomorrow_gross_income": {
-                        "name": "Tomorrow Gross Income"
-                    },
-                    "tomorrow_fees": {
-                        "name": "Tomorrow Fees"
-                    },
-                    "tomorrow_fee_rate": {
-                        "name": "Tomorrow Fee Rate"
                     },
                     "last_update": {
                         "name": "Last update"
                     },
                     "next_update": {
                         "name": "Next update"
-                    },
-                    "charge_peak": {
-                        "name": "Charge Peak"
-                    },
-                    "discharge_peak": {
-                        "name": "Discharge Peak"
                     }
                 }
             },
+            "monthly_yield_sensor": {
+                "name": "CheckWatt Monthly Net Income",
+                "state_attributes": {}
+            },
             "annual_yield_sensor": {
                 "name": "CheckWatt Annual Net Income",
-                "state_attributes": {
-                    "street_address": {
-                        "name": "Street Address"
-                    },
-                    "zip_code": {
-                        "name": "Zip Code"
-                    },
-                    "city": {
-                        "name": "City"
-                    },
-                    "annual_gross_income": {
-                        "name": "Annual Gross Income"
-                    },
-                    "annual_fees": {
-                        "name": "Annual Fees"
-                    },
-                    "annual_fee_rate": {
-                        "name": "Annual Fee Rate"
-                    }
-                }
+                "state_attributes": {}
             },
             "solar_sensor": {
                 "name": "Solar Energy"

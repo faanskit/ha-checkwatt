@@ -4,7 +4,6 @@ from __future__ import annotations
 import asyncio
 from datetime import time, timedelta
 import logging
-import random
 import re
 from typing import TypedDict
 
@@ -22,7 +21,7 @@ from homeassistant.util import dt as dt_util
 from .const import (
     BASIC_TEST,
     CONF_CM10_SENSOR,
-    CONF_DETAILED_SENSORS,
+    CONF_POWER_SENSORS,
     CONF_PUSH_CW_TO_RANK,
     CONF_UPDATE_INTERVAL,
     CONF_UPDATE_INTERVAL_FCRD,
@@ -46,17 +45,26 @@ class CheckwattResp(TypedDict):
     zip: str
     city: str
     display_name: str
-    revenue: float
-    fees: float
-    battery_charge_peak: float
-    battery_discharge_peak: float
-    tomorrow_revenue: float
-    tomorrow_fees: float
+    dso: str
+    energy_provider: str
+
+    battery_power: float
+    grid_power: float
+    solar_power: float
+    battery_soc: float
+    charge_peak_ac: float
+    charge_peak_dc: float
+    discharge_peak_ac: float
+    discharge_peak_dc: float
+
+    today_net_revenue: float
+    tomorrow_net_revenue: float
+    monthly_net_revenue: float
+    annual_net_revenue: float
+
     update_time: str
     next_update_time: str
-    fcr_d_status: str
-    fcr_d_info: str
-    fcr_d_date: str
+
     total_solar_energy: float
     total_charging_energy: float
     total_discharging_energy: float
@@ -64,20 +72,12 @@ class CheckwattResp(TypedDict):
     total_export_energy: float
     spot_price: float
     price_zone: str
-    annual_revenue: float
-    annual_fees: float
-    grid_power: float
-    solar_power: float
-    battery_power: float
-    battery_soc: float
-    dso: str
-    energy_provider: str
+
     cm10_status: str
     cm10_version: str
-    charge_peak_ac: float
-    charge_peak_dc: float
-    discharge_peak_ac: float
-    discharge_peak_dc: float
+    fcr_d_status: str
+    fcr_d_info: str
+    fcr_d_date: str
 
 
 async def update_listener(hass: HomeAssistant, entry):
@@ -177,26 +177,19 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
             update_interval=timedelta(minutes=CONF_UPDATE_INTERVAL),
         )
         self._entry = entry
-        self.update_monetary = 0
         self.update_time = None
         self.next_update_time = None
-        self.today_revenue = None
-        self.today_fees = None
-        self.tomorrow_revenue = None
-        self.tomorrow_fees = None
-        self.annual_revenue = None
-        self.annual_fees = None
-        self.last_annual_update = None
+        self.today_net_revenue = None
+        self.tomorrow_net_revenue = None
+        self.monthly_net_revenue = None
+        self.annual_net_revenue = None
         self.last_cw_rank_push = None
         self.is_boot = True
         self.energy_provider = None
-        self.random_offset = random.randint(0, 14)
         self.fcrd_state = None
         self.fcrd_info = None
         self.fcrd_timestamp = None
         self._id = None
-        self.update_no = 0
-        _LOGGER.debug("Fetching annual revenue at 3:%02d am", self.random_offset)
 
     @property
     def entry_id(self) -> str:
@@ -209,7 +202,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
         try:
             username = self._entry.data.get(CONF_USERNAME)
             password = self._entry.data.get(CONF_PASSWORD)
-            use_detailed_sensors = self._entry.options.get(CONF_DETAILED_SENSORS)
+            use_detailed_sensors = self._entry.options.get(CONF_POWER_SENSORS)
             push_to_cw_rank = self._entry.options.get(CONF_PUSH_CW_TO_RANK)
             use_cm10_sensor = self._entry.options.get(CONF_CM10_SENSOR)
 
@@ -238,10 +231,8 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
 
                 # Prevent slow funcion to be called at boot.
                 # The revenue sensors will be updated after ca 1 min
-                self.update_no += 1
-                if self.update_no > 2:
-                    self.is_boot = False
                 if self.is_boot:
+                    self.is_boot = False
                     if (
                         "Meter" in cw_inst.customer_details
                         and len(cw_inst.customer_details["Meter"]) > 0
@@ -255,36 +246,26 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     self.fcrd_state = fcrd_state
                     self._id = cw_inst.customer_details["Id"]
 
-                else:
-                    if self.update_monetary == 0:
-                        _LOGGER.debug("Fetching FCR-D data from CheckWatt")
-                        self.update_time = dt_util.now().strftime("%Y-%m-%d %H:%M:%S")
-                        end_date = dt_util.now() + timedelta(
-                            minutes=CONF_UPDATE_INTERVAL_FCRD
-                        )
-                        self.next_update_time = end_date.strftime("%Y-%m-%d %H:%M:%S")
-                        self.update_monetary = CONF_UPDATE_INTERVAL_FCRD
-                        if not await cw_inst.get_fcrd_revenue():
-                            raise UpdateFailed("Unknown error get_fcrd_revenue")
-                        self.today_revenue, self.today_fees = cw_inst.today_revenue
-                        (
-                            self.tomorrow_revenue,
-                            self.tomorrow_fees,
-                        ) = cw_inst.tomorrow_revenue
+                self.update_time = dt_util.now().strftime("%Y-%m-%d %H:%M:%S")
+                end_date = dt_util.now() + timedelta(minutes=CONF_UPDATE_INTERVAL_FCRD)
+                self.next_update_time = end_date.strftime("%Y-%m-%d %H:%M:%S")
 
-                    if self.last_annual_update is None or (
-                        dt_util.now().time()
-                        >= time(3, self.random_offset)  # Wait until 3am +- 15 min
-                        and dt_util.start_of_local_day(dt_util.now())
-                        != dt_util.start_of_local_day(self.last_annual_update)
-                    ):
-                        _LOGGER.debug("Fetching annual revenue")
-                        if not await cw_inst.get_fcrd_revenueyear():
-                            raise UpdateFailed("Unknown error get_fcrd_revenueyear")
-                        self.annual_revenue, self.annual_fees = cw_inst.year_revenue
-                        self.last_annual_update = dt_util.now()
+                _LOGGER.debug("Fetching daily revenue")
+                if not await cw_inst.get_net_revenue_today():
+                    raise UpdateFailed("Unknown error get_fcrd_revenue")
 
-                    self.update_monetary -= 1
+                _LOGGER.debug("Fetching annual revenue")
+                if not await cw_inst.get_revenue_year():
+                    raise UpdateFailed("Unknown error get_revenue_year")
+
+                _LOGGER.debug("Fetching monthly revenue")
+                if not await cw_inst.get_revenue_month():
+                    raise UpdateFailed("Unknown error get_revenue_month")
+
+                self.today_net_revenue = cw_inst.today_net_revenue
+                self.tomorrow_net_revenue = cw_inst.tomorrow_net_revenue
+                self.monthly_net_revenue = cw_inst.monthly_net_revenue
+                self.annual_net_revenue = cw_inst.annual_net_revenue
 
                 # Price Zone is used both as Detailed Sensor and by Push to CheckWattRank
                 if push_to_cw_rank or use_detailed_sensors:
@@ -315,13 +296,6 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     "zip": cw_inst.customer_details["ZipCode"],
                     "city": cw_inst.customer_details["City"],
                     "display_name": cw_inst.customer_details["Meter"][0]["DisplayName"],
-                    "update_time": self.update_time,
-                    "next_update_time": self.next_update_time,
-                    "fcr_d_status": fcrd_state,
-                    "fcr_d_info": fcrd_info,
-                    "fcr_d_date": fcrd_timestamp,
-                    "battery_charge_peak": cw_inst.battery_charge_peak,
-                    "battery_discharge_peak": cw_inst.battery_discharge_peak,
                     "dso": cw_inst.battery_registration["Dso"],
                     "energy_provider": self.energy_provider,
                 }
@@ -342,15 +316,16 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     resp["discharge_peak_dc"] = discharge_peak_dc
 
                 # Use self stored variant of revenue parameters as they are not always fetched
-                if self.today_revenue is not None:
-                    resp["revenue"] = self.today_revenue
-                    resp["fees"] = self.today_fees
-                    resp["tomorrow_revenue"] = self.tomorrow_revenue
-                    resp["tomorrow_fees"] = self.tomorrow_fees
+                if self.today_net_revenue is not None:
+                    resp["today_net_revenue"] = self.today_net_revenue
+                    resp["tomorrow_net_revenue"] = self.tomorrow_net_revenue
+                if self.monthly_net_revenue is not None:
+                    resp["monthly_net_revenue"] = self.monthly_net_revenue
+                if self.annual_net_revenue is not None:
+                    resp["annual_net_revenue"] = self.annual_net_revenue
 
-                if self.annual_revenue is not None:
-                    resp["annual_revenue"] = self.annual_revenue
-                    resp["annual_fees"] = self.annual_fees
+                resp["update_time"] = self.update_time
+                resp["next_update_time"] = self.next_update_time
 
                 if use_detailed_sensors:
                     resp["total_solar_energy"] = cw_inst.total_solar_energy
@@ -371,6 +346,9 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                         resp["cm10_status"] = "Active"
 
                     resp["cm10_version"] = cw_inst.meter_version
+                    resp["fcr_d_status"] = fcrd_state
+                    resp["fcr_d_info"] = fcrd_info
+                    resp["fcr_d_date"] = fcrd_timestamp
 
                 # Check if FCR-D State has changed and dispatch it ACTIVATED/ DEACTIVATED
                 old_state = self.fcrd_state
@@ -423,7 +401,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
 
     async def push_to_checkwatt_rank(self, cw_inst):
         """Push data to CheckWattRank."""
-        if self.today_revenue is not None:
+        if self.today_net_revenue is not None:
             if (
                 "Meter" in cw_inst.customer_details
                 and len(cw_inst.customer_details["Meter"]) > 0
@@ -437,9 +415,9 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     "electricity_company": self.energy_provider,
                     "electricity_area": cw_inst.price_zone,
                     "installed_power": cw_inst.battery_charge_peak,
-                    "today_gross_income": self.today_revenue,
-                    "today_fee": self.today_fees,
-                    "today_net_income": self.today_revenue - self.today_fees,
+                    "today_gross_income": 0,
+                    "today_fee": 0,
+                    "today_net_income": self.today_net_revenue,
                     "reseller_id": cw_inst.customer_details["Meter"][0]["ResellerId"],
                 }
                 if BASIC_TEST:

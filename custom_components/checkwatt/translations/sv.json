@@ -24,7 +24,6 @@
             "init": {
                 "data": {
                     "show_details": "Skapa energisensorer",
-                    "show_detailed_attributes": "Visa detaljerade attribut",
                     "push_to_cw_rank": "Skicka data till CheckWattRank",
                     "cm10_sensor": "Skapa CM10 sensor"
                 },
@@ -56,63 +55,24 @@
                     "energy_provider": {
                         "name": "Elhandelsbolag"
                     },
-                    "today_gross_income": {
-                        "name": "Dagens Bruttoinkomst"
-                    },
-                    "today_fees": {
-                        "name": "Dagens Avgifter"
-                    },
-                    "today_fees_rate": {
-                        "name": "Dagens Avgiftssats"
-                    },
                     "tomorrow_net_income": {
                         "name": "Morgondagens Nettointäkt"
-                    },
-                    "tomorrow_gross_income": {
-                        "name": "Morgondagens Bruttoinkomst"
-                    },
-                    "tomorrow_fees": {
-                        "name": "Morgondagens Avgifter"
-                    },
-                    "tomorrow_fee_rate": {
-                        "name": "Morgondagens Avgiftssats"
                     },
                     "last_update": {
                         "name": "Senaste uppdateringen"
                     },
                     "next_update": {
                         "name": "Nästa uppdatering"
-                    },
-                    "charge_peak": {
-                        "name": "Laddningstopp"
-                    },
-                    "discharge_peak": {
-                        "name": "Urladdningstopp"
                     }
                 }
             },
+            "monthly_yield_sensor": {
+                "name": "CheckWatt Månadens Intäkt",
+                "state_attributes": {}
+            },
             "annual_yield_sensor": {
                 "name": "CheckWatt Årets Intäkt",
-                "state_attributes": {
-                    "street_address": {
-                        "name": "Adress"
-                    },
-                    "zip_code": {
-                        "name": "Postnummer"
-                    },
-                    "city": {
-                        "name": "Stad"
-                    },
-                    "annual_gross_income": {
-                        "name": "Årets Bruttoinkomst"
-                    },
-                    "annual_fees": {
-                        "name": "Årets Avgifter"
-                    },
-                    "annual_fee_rate": {
-                        "name": "Årets Avgiftssats"
-                    }
-                }
+                "state_attributes": {}
             },
             "solar_sensor": {
                 "name": "Solenergi"
@@ -172,7 +132,6 @@
                     "discharge_peak_dc": {
                         "name": "Urladdningstopp DC"
                     }
-
                 }
             },
             "cm10_sensor": {
