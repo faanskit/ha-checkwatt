@@ -24,7 +24,7 @@ from .const import (
     CONF_POWER_SENSORS,
     CONF_PUSH_CW_TO_RANK,
     CONF_UPDATE_INTERVAL_ALL,
-    CONF_UPDATE_INTERVAL_NON_POWER,
+    CONF_UPDATE_INTERVAL_MONETARY,
     DOMAIN,
     EVENT_SIGNAL_FCRD,
     INTEGRATION_NAME,
@@ -200,7 +200,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
 
                 # Only fetch some parameters every 15 min
                 if self.update_all == 0 and not self.is_boot:
-                    self.update_all = CONF_UPDATE_INTERVAL_NON_POWER
+                    self.update_all = CONF_UPDATE_INTERVAL_MONETARY
                     _LOGGER.debug("Fetching daily revenue")
                     if not await cw_inst.get_fcrd_today_net_revenue():
                         raise UpdateFailed("Unknown error get_fcrd_revenue")
@@ -299,7 +299,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
 
                 update_time = dt_util.now().strftime("%Y-%m-%d %H:%M:%S")
                 next_update = dt_util.now() + timedelta(
-                    minutes=CONF_UPDATE_INTERVAL_NON_POWER
+                    minutes=CONF_UPDATE_INTERVAL_MONETARY
                 )
                 next_update_time = next_update.strftime("%Y-%m-%d %H:%M:%S")
                 resp["update_time"] = update_time
