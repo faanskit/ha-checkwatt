@@ -179,7 +179,6 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
             push_to_cw_rank = self._entry.options.get(CONF_PUSH_CW_TO_RANK)
             use_cm10_sensor = self._entry.options.get(CONF_CM10_SENSOR)
             cwr_name = self._entry.options.get(CONF_CWR_NAME)
-            _LOGGER.debug("Configured name for CheckWattRank: %s", cwr_name)
 
             async with CheckwattManager(
                 username, password, INTEGRATION_NAME
