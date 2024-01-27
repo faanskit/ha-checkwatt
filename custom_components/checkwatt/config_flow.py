@@ -72,7 +72,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 options={
                     CONF_POWER_SENSORS: False,
                     CONF_PUSH_CW_TO_RANK: False,
-                    CONF_CM10_SENSOR: False,
+                    CONF_CM10_SENSOR: True,
                 },
             )
 

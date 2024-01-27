@@ -6,8 +6,7 @@ INTEGRATION_NAME = "ha-checkwatt"
 
 # Update interval for regular sensors is once every minute
 # For FCR-D since it is slow and resource consuming, is set to once per 15 minute
-CONF_UPDATE_INTERVAL = 1
-CONF_UPDATE_INTERVAL_FCRD = 60
+CONF_UPDATE_INTERVAL = 15
 ATTRIBUTION = "Data provided by CheckWatt EnergyInBalance"
 MANUFACTURER = "CheckWatt"
 CHECKWATT_MODEL = "CheckWatt"
