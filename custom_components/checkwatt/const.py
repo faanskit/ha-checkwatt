@@ -1,4 +1,5 @@
 """Constants for the CheckWatt integration."""
+
 from typing import Final
 
 DOMAIN = "checkwatt"

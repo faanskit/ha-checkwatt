@@ -1,4 +1,5 @@
-"""Events for Withings."""
+"""Events for CheckWatt."""
+
 from __future__ import annotations
 
 import logging
