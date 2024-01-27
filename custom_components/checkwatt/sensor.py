@@ -1,4 +1,5 @@
 """Support for CheckWatt sensors."""
+
 from __future__ import annotations
 
 from datetime import timedelta
@@ -21,16 +22,12 @@ from . import CheckwattCoordinator, CheckwattResp
 from .const import (
     ATTRIBUTION,
     C_ADR,
-    C_ANNUAL_FEE_RATE,
-    C_ANNUAL_FEES,
-    C_ANNUAL_GROSS,
     C_BATTERY_POWER,
-    C_CHARGE_PEAK,
     C_CHARGE_PEAK_AC,
     C_CHARGE_PEAK_DC,
     C_CITY,
     C_CM10_VERSION,
-    C_DISCHARGE_PEAK,
+    C_DAILY_AVERAGE,
     C_DISCHARGE_PEAK_AC,
     C_DISCHARGE_PEAK_DC,
     C_DISPLAY_NAME,
@@ -40,23 +37,17 @@ from .const import (
     C_FCRD_INFO,
     C_FCRD_STATUS,
     C_GRID_POWER,
+    C_MONTH_ESITIMATE,
     C_NEXT_UPDATE_TIME,
     C_PRICE_ZONE,
     C_SOLAR_POWER,
-    C_TODAY_FEE_RATE,
-    C_TODAY_FEES,
-    C_TODAY_GROSS,
-    C_TOMORROW_FEE_RATE,
-    C_TOMORROW_FEES,
-    C_TOMORROW_GROSS,
     C_TOMORROW_NET,
     C_UPDATE_TIME,
     C_VAT,
     C_ZIP,
     CHECKWATT_MODEL,
     CONF_CM10_SENSOR,
-    CONF_DETAILED_ATTRIBUTES,
-    CONF_DETAILED_SENSORS,
+    CONF_POWER_SENSORS,
     DOMAIN,
     MANUFACTURER,
 )
@@ -74,6 +65,15 @@ CHECKWATT_MONETARY_SENSORS: dict[str, SensorEntityDescription] = {
         native_unit_of_measurement="SEK",
         state_class=SensorStateClass.TOTAL,
         translation_key="daily_yield_sensor",
+    ),
+    "monthly": SensorEntityDescription(
+        key="monthly_yield",
+        name="CheckWatt Monthly Yield",
+        icon="mdi:account-cash-outline",
+        device_class=SensorDeviceClass.MONETARY,
+        native_unit_of_measurement="SEK",
+        state_class=SensorStateClass.TOTAL,
+        translation_key="monthly_yield_sensor",
     ),
     "annual": SensorEntityDescription(
         key="annual_yield",
@@ -179,26 +179,23 @@ async def async_setup_entry(
     coordinator: CheckwattCoordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[AbstractCheckwattSensor] = []
     checkwatt_data: CheckwattResp = coordinator.data
-    use_detailed_sensors = entry.options.get(CONF_DETAILED_SENSORS)
-    use_detailed_attributes = entry.options.get(CONF_DETAILED_ATTRIBUTES)
+    use_power_sensors = entry.options.get(CONF_POWER_SENSORS)
     use_cm10_sensor = entry.options.get(CONF_CM10_SENSOR)
 
     _LOGGER.debug("Setting up CheckWatt sensor for %s", checkwatt_data["display_name"])
     for key, description in CHECKWATT_MONETARY_SENSORS.items():
         if key == "daily":
-            entities.append(
-                CheckwattSensor(coordinator, description, use_detailed_attributes)
-            )
+            entities.append(CheckwattSensor(coordinator, description))
+        elif key == "monthly":
+            entities.append(CheckwattMonthlySensor(coordinator, description))
         elif key == "annual":
-            entities.append(
-                CheckwattAnnualSensor(coordinator, description, use_detailed_attributes)
-            )
+            entities.append(CheckwattAnnualSensor(coordinator, description))
         elif key == "battery":
             entities.append(CheckwattBatterySoCSensor(coordinator, description))
         elif key == "cm10" and use_cm10_sensor:
             entities.append(CheckwattCM10Sensor(coordinator, description))
 
-    if use_detailed_sensors:
+    if use_power_sensors:
         _LOGGER.debug(
             "Setting up detailed CheckWatt sensors for %s",
             checkwatt_data["display_name"],
@@ -223,6 +220,7 @@ class AbstractCheckwattSensor(CoordinatorEntity[CheckwattCoordinator], SensorEnt
         description: SensorEntityDescription,
     ) -> None:
         """Initialize the sensor."""
+        _LOGGER.debug("Creating %s sensor", description.name)
         super().__init__(coordinator)
         self._coordinator = coordinator
         self._device_model = CHECKWATT_MODEL
@@ -253,11 +251,9 @@ class CheckwattSensor(AbstractCheckwattSensor):
         self,
         coordinator: CheckwattCoordinator,
         description: SensorEntityDescription,
-        use_detailed_attributes,
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator=coordinator, description=description)
-        self.use_detailed_attributes = use_detailed_attributes
         self._attr_unique_id = f'checkwattUid_{self._coordinator.data["id"]}'
 
         self._attr_extra_state_attributes = {}
@@ -285,60 +281,22 @@ class CheckwattSensor(AbstractCheckwattSensor):
             self._attr_extra_state_attributes.update(
                 {C_ENERGY_PROVIDER: self._coordinator.data["energy_provider"]}
             )
-        if "revenue" in self._coordinator.data and "fees" in self._coordinator.data:
-            revenue = self._coordinator.data["revenue"]
-            fees = self._coordinator.data["fees"]
-            if self.use_detailed_attributes:  # Only show these at detailed attribues
-                self._attr_extra_state_attributes[C_TODAY_GROSS] = round(revenue, 2)
-                self._attr_extra_state_attributes[C_TODAY_FEES] = round(fees, 2)
-                if revenue > 0:
-                    self._attr_extra_state_attributes[
-                        C_TODAY_FEE_RATE
-                    ] = f"{round((fees / revenue) * 100, 2)} %"
-                else:
-                    self._attr_extra_state_attributes[C_TODAY_FEE_RATE] = "N/A %"
-
-        if (
-            "tomorrow_revenue" in self._coordinator.data
-            and "tomorrow_fees" in self._coordinator.data
-        ):
-            tomorrow_revenue = self._coordinator.data["tomorrow_revenue"]
-            tomorrow_fees = self._coordinator.data["tomorrow_fees"]
-            self._attr_extra_state_attributes[C_TOMORROW_NET] = round(
-                (tomorrow_revenue - tomorrow_fees), 2
+        if "tomorrow_net_revenue" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {
+                    C_TOMORROW_NET: round(
+                        self._coordinator.data["tomorrow_net_revenue"], 2
+                    )
+                }
             )
-            if self.use_detailed_attributes:  # Only show these at detailed attribues
-                self._attr_extra_state_attributes[C_TOMORROW_GROSS] = round(
-                    tomorrow_revenue, 2
-                )
-                self._attr_extra_state_attributes[C_TOMORROW_FEES] = round(
-                    tomorrow_fees, 2
-                )
-                if tomorrow_revenue > 0:
-                    self._attr_extra_state_attributes[
-                        C_TOMORROW_FEE_RATE
-                    ] = f"{round((tomorrow_fees / tomorrow_revenue) * 100, 2 )} %"
-                else:
-                    self._attr_extra_state_attributes[C_TOMORROW_FEE_RATE] = "N/A %"
-
-        if use_detailed_attributes:
-            # Add extra attributes as required
-            if "update_time" in self._coordinator.data:
-                self._attr_extra_state_attributes.update(
-                    {C_UPDATE_TIME: self._coordinator.data["update_time"]}
-                )
-            if "next_update_time" in self._coordinator.data:
-                self._attr_extra_state_attributes.update(
-                    {C_NEXT_UPDATE_TIME: self._coordinator.data["next_update_time"]}
-                )
-            if "battery_charge_peak" in self._coordinator.data:
-                self._attr_extra_state_attributes.update(
-                    {C_CHARGE_PEAK: self._coordinator.data["battery_charge_peak"]}
-                )
-            if "battery_discharge_peak" in self._coordinator.data:
-                self._attr_extra_state_attributes.update(
-                    {C_DISCHARGE_PEAK: self._coordinator.data["battery_discharge_peak"]}
-                )
+        if "update_time" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_UPDATE_TIME: self._coordinator.data["update_time"]}
+            )
+        if "next_update_time" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_NEXT_UPDATE_TIME: self._coordinator.data["next_update_time"]}
+            )
 
         self._attr_available = False
 
@@ -350,71 +308,79 @@ class CheckwattSensor(AbstractCheckwattSensor):
     def _handle_coordinator_update(self) -> None:
         """Get the latest data and updates the states."""
         # Update the native value
-        if "revenue" in self._coordinator.data and "fees" in self._coordinator.data:
-            revenue = self._coordinator.data["revenue"]
-            fees = self._coordinator.data["fees"]
-            self._attr_native_value = round((revenue - fees), 2)
-            if self.use_detailed_attributes:  # Only show these at detailed attribues
-                self._attr_extra_state_attributes[C_TODAY_GROSS] = round(revenue, 2)
-                self._attr_extra_state_attributes[C_TODAY_FEES] = round(fees, 2)
-                if revenue > 0:
-                    self._attr_extra_state_attributes[
-                        C_TODAY_FEE_RATE
-                    ] = f"{round((fees / revenue) * 100, 2)} %"
-                else:
-                    self._attr_extra_state_attributes[C_TODAY_FEE_RATE] = "N/A %"
-
-        # Update the normal attributes
-        if (
-            "tomorrow_revenue" in self._coordinator.data
-            and "tomorrow_fees" in self._coordinator.data
-        ):
-            tomorrow_revenue = self._coordinator.data["tomorrow_revenue"]
-            tomorrow_fees = self._coordinator.data["tomorrow_fees"]
-            self._attr_extra_state_attributes[C_TOMORROW_NET] = round(
-                (tomorrow_revenue - tomorrow_fees), 2
+        if "tomorrow_net_revenue" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {
+                    C_TOMORROW_NET: round(
+                        self._coordinator.data["tomorrow_net_revenue"], 2
+                    )
+                }
             )
-            if self.use_detailed_attributes:  # Only show these at detailed attribues
-                self._attr_extra_state_attributes[C_TOMORROW_GROSS] = round(
-                    tomorrow_revenue, 2
-                )
-                self._attr_extra_state_attributes[C_TOMORROW_FEES] = round(
-                    tomorrow_fees, 2
-                )
-                if tomorrow_revenue > 0:
-                    self._attr_extra_state_attributes[
-                        C_TOMORROW_FEE_RATE
-                    ] = f"{round((tomorrow_fees / tomorrow_revenue) * 100, 2)} %"
-                else:
-                    self._attr_extra_state_attributes[C_TOMORROW_FEE_RATE] = "N/A %"
-
-        # Update the extra attributes
-        if self.use_detailed_attributes:
-            if "update_time" in self._coordinator.data:
-                self._attr_extra_state_attributes.update(
-                    {C_UPDATE_TIME: self._coordinator.data["update_time"]}
-                )
-            if "next_update_time" in self._coordinator.data:
-                self._attr_extra_state_attributes.update(
-                    {C_NEXT_UPDATE_TIME: self._coordinator.data["next_update_time"]}
-                )
-            if "battery_charge_peak" in self._coordinator.data:
-                self._attr_extra_state_attributes.update(
-                    {C_CHARGE_PEAK: self._coordinator.data["battery_charge_peak"]}
-                )
-            if "battery_discharge_peak" in self._coordinator.data:
-                self._attr_extra_state_attributes.update(
-                    {C_DISCHARGE_PEAK: self._coordinator.data["battery_discharge_peak"]}
-                )
+        if "update_time" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_UPDATE_TIME: self._coordinator.data["update_time"]}
+            )
+        if "next_update_time" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_NEXT_UPDATE_TIME: self._coordinator.data["next_update_time"]}
+            )
         super()._handle_coordinator_update()
 
     @property
     def native_value(self) -> str | None:
         """Get the latest state value."""
-        if "revenue" in self._coordinator.data and "fees" in self._coordinator.data:
-            return round(
-                self._coordinator.data["revenue"] - self._coordinator.data["fees"], 2
+        if "today_net_revenue" in self._coordinator.data:
+            return round(self._coordinator.data["today_net_revenue"], 2)
+        return None
+
+
+class CheckwattMonthlySensor(AbstractCheckwattSensor):
+    """Representation of a CheckWatt Monthly Revenue sensor."""
+
+    def __init__(
+        self,
+        coordinator: CheckwattCoordinator,
+        description: SensorEntityDescription,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator=coordinator, description=description)
+        self._attr_unique_id = f'checkwattUid_Monthly_{self._coordinator.data["id"]}'
+        self._attr_extra_state_attributes = {}
+        self._attr_available = False
+
+    async def async_update(self) -> None:
+        """Get the latest data and updates the states."""
+        if "month_estimate" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_MONTH_ESITIMATE: round(self._coordinator.data["month_estimate"], 2)}
             )
+        if "daily_average" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_DAILY_AVERAGE: round(self._coordinator.data["daily_average"], 2)}
+            )
+        self._attr_available = True
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Get the latest data and updates the states."""
+        self._attr_native_value = round(
+            self._coordinator.data["monthly_net_revenue"], 2
+        )
+        if "month_estimate" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_MONTH_ESITIMATE: round(self._coordinator.data["month_estimate"], 2)}
+            )
+        if "daily_average" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_DAILY_AVERAGE: round(self._coordinator.data["daily_average"], 2)}
+            )
+        super()._handle_coordinator_update()
+
+    @property
+    def native_value(self) -> str | None:
+        """Get the latest state value."""
+        if "monthly_net_revenue" in self._coordinator.data:
+            return round(self._coordinator.data["monthly_net_revenue"], 2)
         return None
 
 
@@ -425,127 +391,28 @@ class CheckwattAnnualSensor(AbstractCheckwattSensor):
         self,
         coordinator: CheckwattCoordinator,
         description: SensorEntityDescription,
-        use_detailed_attributes,
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator=coordinator, description=description)
-        self.use_detailed_attributes = use_detailed_attributes
         self._attr_unique_id = f'checkwattUid_Annual_{self._coordinator.data["id"]}'
-        self.total_annual_revenue = None
-        self.total_annual_fee = None
-
         self._attr_extra_state_attributes = {}
-        if "address" in self._coordinator.data:
-            self._attr_extra_state_attributes.update(
-                {C_ADR: self._coordinator.data["address"]}
-            )
-        if "zip" in self._coordinator.data:
-            self._attr_extra_state_attributes.update(
-                {C_ZIP: self._coordinator.data["zip"]}
-            )
-        if "city" in self._coordinator.data:
-            self._attr_extra_state_attributes.update(
-                {C_CITY: self._coordinator.data["city"]}
-            )
-        if (
-            "annual_revenue" in self._coordinator.data
-            and "annual_fees" in self._coordinator.data
-            and "revenue" in self._coordinator.data
-            and "fees" in self._coordinator.data
-            and "tomorrow_revenue" in self._coordinator.data
-            and "tomorrow_fees" in self._coordinator.data
-        ):
-            # Annual revenue does not contain today and tomorrow revenue
-            # and is only fetched once daily.
-            # To obtain Total Annual revenue, it needs to be calculated
-            annual_revenue = self._coordinator.data["annual_revenue"]
-            annual_fees = self._coordinator.data["annual_fees"]
-            today_revenue = self._coordinator.data["revenue"]
-            today_fees = self._coordinator.data["fees"]
-            tomorrow_revenue = self._coordinator.data["tomorrow_revenue"]
-            tomorrow_fees = self._coordinator.data["tomorrow_fees"]
-            self.total_annual_revenue = (
-                annual_revenue + today_revenue + tomorrow_revenue
-            )
-            self.total_annual_fee = annual_fees + today_fees + tomorrow_fees
-            self._attr_native_value = round(
-                (self.total_annual_revenue - self.total_annual_fee), 2
-            )
-
-            if self.use_detailed_attributes:  # Only show these at detailed attribues
-                self._attr_extra_state_attributes[C_ANNUAL_GROSS] = round(
-                    self.total_annual_revenue, 2
-                )
-                self._attr_extra_state_attributes[C_ANNUAL_FEES] = round(
-                    self.total_annual_fee, 2
-                )
-                if self.total_annual_revenue > 0:
-                    self._attr_extra_state_attributes[
-                        C_ANNUAL_FEE_RATE
-                    ] = f"{round((self.total_annual_fee / self.total_annual_revenue) * 100, 2)} %"
-                else:
-                    self._attr_extra_state_attributes[C_ANNUAL_FEE_RATE] = "N/A %"
         self._attr_available = False
 
     async def async_update(self) -> None:
         """Get the latest data and updates the states."""
-        self._attr_available = True
+        self._attr_available = False
 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Get the latest data and updates the states."""
-        # Update the native value
-        if (
-            "annual_revenue" in self._coordinator.data
-            and "annual_fees" in self._coordinator.data
-            and "revenue" in self._coordinator.data
-            and "fees" in self._coordinator.data
-            and "tomorrow_revenue" in self._coordinator.data
-            and "tomorrow_fees" in self._coordinator.data
-        ):
-            # Annual revenue does not contain today and tomorrow revenue
-            # and is only fetched once daily.
-            # To obtain Total Annual revenue, it needs to be calculated
-            annual_revenue = self._coordinator.data["annual_revenue"]
-            annual_fees = self._coordinator.data["annual_fees"]
-            today_revenue = self._coordinator.data["revenue"]
-            today_fees = self._coordinator.data["fees"]
-            tomorrow_revenue = self._coordinator.data["tomorrow_revenue"]
-            tomorrow_fees = self._coordinator.data["tomorrow_fees"]
-
-            self.total_annual_revenue = (
-                annual_revenue + today_revenue + tomorrow_revenue
-            )
-
-            self.total_annual_fee = annual_fees + today_fees + tomorrow_fees
-
-            self._attr_native_value = round(
-                (self.total_annual_revenue - self.total_annual_fee), 2
-            )
-            if self.use_detailed_attributes:  # Only show these at detailed attribues
-                self._attr_extra_state_attributes[C_ANNUAL_GROSS] = round(
-                    self.total_annual_revenue, 2
-                )
-                self._attr_extra_state_attributes[C_ANNUAL_FEES] = round(
-                    self.total_annual_fee, 2
-                )
-                if self.total_annual_revenue > 0:
-                    self._attr_extra_state_attributes[
-                        C_ANNUAL_FEE_RATE
-                    ] = f"{round((self.total_annual_fee / self.total_annual_revenue) * 100, 2)} %"
-                else:
-                    self._attr_extra_state_attributes[C_ANNUAL_FEE_RATE] = "N/A %"
-
+        self._attr_native_value = round(self._coordinator.data["annual_net_revenue"], 2)
         super()._handle_coordinator_update()
 
     @property
     def native_value(self) -> str | None:
         """Get the latest state value."""
-        if self.total_annual_revenue is not None and self.total_annual_fee is not None:
-            return round(
-                self.total_annual_revenue - self.total_annual_fee,
-                2,
-            )
+        if "annual_net_revenue" in self._coordinator.data:
+            return round(self._coordinator.data["annual_net_revenue"], 2)
         return None
 
 
@@ -559,7 +426,6 @@ class CheckwattEnergySensor(AbstractCheckwattSensor):
         data_key,
     ) -> None:
         """Initialize the sensor."""
-        _LOGGER.debug("Creating %s sensor", description.name)
         super().__init__(coordinator=coordinator, description=description)
         self.data_key = data_key
 
@@ -589,7 +455,6 @@ class CheckwattSpotPriceSensor(AbstractCheckwattSensor):
         vat_key,
     ) -> None:
         """Initialize the sensor."""
-        _LOGGER.debug("Creating %s sensor", description.name)
         super().__init__(coordinator=coordinator, description=description)
         self.vat_key = vat_key
 
@@ -631,7 +496,6 @@ class CheckwattBatterySoCSensor(AbstractCheckwattSensor):
         description: SensorEntityDescription,
     ) -> None:
         """Initialize the sensor."""
-        _LOGGER.debug("Creating %s sensor", description.name)
         super().__init__(coordinator=coordinator, description=description)
 
     async def async_update(self) -> None:
@@ -716,7 +580,6 @@ class CheckwattCM10Sensor(AbstractCheckwattSensor):
         description: SensorEntityDescription,
     ) -> None:
         """Initialize the sensor."""
-        _LOGGER.debug("Creating %s sensor", description.name)
         super().__init__(coordinator=coordinator, description=description)
 
     async def async_update(self) -> None:

@@ -1,4 +1,5 @@
 """Config flow for CheckWatt integration."""
+
 from __future__ import annotations
 
 import logging
@@ -15,8 +16,8 @@ from homeassistant.exceptions import HomeAssistantError
 
 from .const import (
     CONF_CM10_SENSOR,
-    CONF_DETAILED_ATTRIBUTES,
-    CONF_DETAILED_SENSORS,
+    CONF_CWR_NAME,
+    CONF_POWER_SENSORS,
     CONF_PUSH_CW_TO_RANK,
     DOMAIN,
 )
@@ -76,10 +77,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 title=CONF_TITLE,
                 data=self.data,
                 options={
-                    CONF_DETAILED_SENSORS: False,
-                    CONF_DETAILED_ATTRIBUTES: False,
+                    CONF_POWER_SENSORS: False,
                     CONF_PUSH_CW_TO_RANK: False,
-                    CONF_CM10_SENSOR: False,
+                    CONF_CM10_SENSOR: True,
+                    CONF_CWR_NAME: "",
                 },
             )
 
@@ -115,12 +116,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             data_schema=vol.Schema(
                 {
                     vol.Required(
-                        CONF_DETAILED_SENSORS,
-                        default=self.config_entry.options.get(CONF_DETAILED_SENSORS),
-                    ): bool,
-                    vol.Required(
-                        CONF_DETAILED_ATTRIBUTES,
-                        default=self.config_entry.options.get(CONF_DETAILED_ATTRIBUTES),
+                        CONF_POWER_SENSORS,
+                        default=self.config_entry.options.get(CONF_POWER_SENSORS),
                     ): bool,
                     vol.Required(
                         CONF_PUSH_CW_TO_RANK,
@@ -130,6 +127,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                         CONF_CM10_SENSOR,
                         default=self.config_entry.options.get(CONF_CM10_SENSOR),
                     ): bool,
+                    vol.Optional(
+                        CONF_CWR_NAME,
+                        default=self.config_entry.options.get(CONF_CWR_NAME),
+                    ): str,
                 }
             ),
         )
