@@ -59,6 +59,8 @@ class CheckwattResp(TypedDict):
     tomorrow_net_revenue: float
     monthly_net_revenue: float
     annual_net_revenue: float
+    month_estimate: float
+    daily_average: float
 
     update_time: str
     next_update_time: str
@@ -268,6 +270,8 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     resp["tomorrow_net_revenue"] = cw_inst.fcrd_tomorrow_net_revenue
                 if cw_inst.fcrd_month_net_revenue is not None:
                     resp["monthly_net_revenue"] = cw_inst.fcrd_month_net_revenue
+                    resp["month_estimate"] = cw_inst.fcrd_month_net_estimate
+                    resp["daily_average"] = cw_inst.fcrd_daily_net_average
                 if cw_inst.fcrd_year_net_revenue is not None:
                     resp["annual_net_revenue"] = cw_inst.fcrd_year_net_revenue
 

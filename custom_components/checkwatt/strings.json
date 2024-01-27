@@ -68,7 +68,14 @@
             },
             "monthly_yield_sensor": {
                 "name": "CheckWatt Monthly Net Income",
-                "state_attributes": {}
+                "state_attributes": {
+                    "month_estimate": {
+                        "name": "Month Estimate"
+                    },
+                    "daily_average": {
+                        "name": "Daily Average"
+                    }
+                }
             },
             "annual_yield_sensor": {
                 "name": "CheckWatt Annual Net Income",

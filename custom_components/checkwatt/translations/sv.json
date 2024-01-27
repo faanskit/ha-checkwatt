@@ -68,7 +68,14 @@
             },
             "monthly_yield_sensor": {
                 "name": "CheckWatt Månadens Intäkt",
-                "state_attributes": {}
+                "state_attributes": {
+                    "month_estimate": {
+                        "name": "Månadsestimat"
+                    },
+                    "daily_average": {
+                        "name": "Daglig medelintäkt"
+                    }
+                }
             },
             "annual_yield_sensor": {
                 "name": "CheckWatt Årets Intäkt",

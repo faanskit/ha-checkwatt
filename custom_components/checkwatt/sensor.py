@@ -26,6 +26,7 @@ from .const import (
     C_CHARGE_PEAK_DC,
     C_CITY,
     C_CM10_VERSION,
+    C_DAILY_AVERAGE,
     C_DISCHARGE_PEAK_AC,
     C_DISCHARGE_PEAK_DC,
     C_DISPLAY_NAME,
@@ -35,6 +36,7 @@ from .const import (
     C_FCRD_INFO,
     C_FCRD_STATUS,
     C_GRID_POWER,
+    C_MONTH_ESITIMATE,
     C_NEXT_UPDATE_TIME,
     C_PRICE_ZONE,
     C_SOLAR_POWER,
@@ -279,8 +281,12 @@ class CheckwattSensor(AbstractCheckwattSensor):
                 {C_ENERGY_PROVIDER: self._coordinator.data["energy_provider"]}
             )
         if "tomorrow_net_revenue" in self._coordinator.data:
-            self._attr_extra_state_attributes[C_TOMORROW_NET] = round(
-                self._coordinator.data["tomorrow_net_revenue"], 2
+            self._attr_extra_state_attributes.update(
+                {
+                    C_TOMORROW_NET: round(
+                        self._coordinator.data["tomorrow_net_revenue"], 2
+                    )
+                }
             )
         if "update_time" in self._coordinator.data:
             self._attr_extra_state_attributes.update(
@@ -302,8 +308,12 @@ class CheckwattSensor(AbstractCheckwattSensor):
         """Get the latest data and updates the states."""
         # Update the native value
         if "tomorrow_net_revenue" in self._coordinator.data:
-            self._attr_extra_state_attributes[C_TOMORROW_NET] = round(
-                self._coordinator.data["tomorrow_net_revenue"], 2
+            self._attr_extra_state_attributes.update(
+                {
+                    C_TOMORROW_NET: round(
+                        self._coordinator.data["tomorrow_net_revenue"], 2
+                    )
+                }
             )
         if "update_time" in self._coordinator.data:
             self._attr_extra_state_attributes.update(
@@ -313,7 +323,6 @@ class CheckwattSensor(AbstractCheckwattSensor):
             self._attr_extra_state_attributes.update(
                 {C_NEXT_UPDATE_TIME: self._coordinator.data["next_update_time"]}
             )
-        self._attr_native_value = round(self._coordinator.data["today_net_revenue"], 2)
         super()._handle_coordinator_update()
 
     @property
@@ -340,7 +349,15 @@ class CheckwattMonthlySensor(AbstractCheckwattSensor):
 
     async def async_update(self) -> None:
         """Get the latest data and updates the states."""
-        self._attr_available = False
+        if "month_estimate" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_MONTH_ESITIMATE: round(self._coordinator.data["month_estimate"], 2)}
+            )
+        if "daily_average" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_DAILY_AVERAGE: round(self._coordinator.data["daily_average"], 2)}
+            )
+        self._attr_available = True
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -348,6 +365,14 @@ class CheckwattMonthlySensor(AbstractCheckwattSensor):
         self._attr_native_value = round(
             self._coordinator.data["monthly_net_revenue"], 2
         )
+        if "month_estimate" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_MONTH_ESITIMATE: round(self._coordinator.data["month_estimate"], 2)}
+            )
+        if "daily_average" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_DAILY_AVERAGE: round(self._coordinator.data["daily_average"], 2)}
+            )
         super()._handle_coordinator_update()
 
     @property
