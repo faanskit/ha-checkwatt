@@ -25,7 +25,8 @@
                 "data": {
                     "show_details": "Provide energy sensors",
                     "push_to_cw_rank": "Push data to CheckWattRank",
-                    "cm10_sensor": "Provide CM10 sensor"
+                    "cm10_sensor": "Provide CM10 sensor",
+                    "cwr_name": "System name for CheckWattRank"
                 },
                 "description": "Select options",
                 "title": "CheckWatt"

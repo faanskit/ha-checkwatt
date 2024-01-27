@@ -21,6 +21,7 @@ from homeassistant.util import dt as dt_util
 from .const import (
     BASIC_TEST,
     CONF_CM10_SENSOR,
+    CONF_CWR_NAME,
     CONF_POWER_SENSORS,
     CONF_PUSH_CW_TO_RANK,
     CONF_UPDATE_INTERVAL_ALL,
@@ -177,6 +178,8 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
             use_power_sensors = self._entry.options.get(CONF_POWER_SENSORS)
             push_to_cw_rank = self._entry.options.get(CONF_PUSH_CW_TO_RANK)
             use_cm10_sensor = self._entry.options.get(CONF_CM10_SENSOR)
+            cwr_name = self._entry.options.get(CONF_CWR_NAME)
+            _LOGGER.debug("Configured name for CheckWattRank: %s", cwr_name)
 
             async with CheckwattManager(
                 username, password, INTEGRATION_NAME
@@ -256,7 +259,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                         != dt_util.start_of_local_day(self.last_cw_rank_push)
                     ):
                         _LOGGER.debug("Pushing to CheckWattRank")
-                        if await self.push_to_checkwatt_rank(cw_inst):
+                        if await self.push_to_checkwatt_rank(cw_inst, cwr_name):
                             self.last_cw_rank_push = dt_util.now()
 
                 resp: CheckwattResp = {
@@ -378,7 +381,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
         except CheckwattError as err:
             raise UpdateFailed(str(err)) from err
 
-    async def push_to_checkwatt_rank(self, cw_inst):
+    async def push_to_checkwatt_rank(self, cw_inst, cwr_name):
         """Push data to CheckWattRank."""
         if self.today_net_revenue is not None:
             if (
@@ -401,6 +404,8 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                 }
                 if BASIC_TEST:
                     payload["display_name"] = "xxTESTxx"
+                elif cwr_name != "":
+                    payload["display_name"] = cwr_name
                 else:
                     payload["display_name"] = cw_inst.customer_details["Meter"][0][
                         "DisplayName"

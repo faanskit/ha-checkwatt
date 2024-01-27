@@ -14,7 +14,13 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 
-from .const import CONF_CM10_SENSOR, CONF_POWER_SENSORS, CONF_PUSH_CW_TO_RANK, DOMAIN
+from .const import (
+    CONF_CM10_SENSOR,
+    CONF_CWR_NAME,
+    CONF_POWER_SENSORS,
+    CONF_PUSH_CW_TO_RANK,
+    DOMAIN,
+)
 
 CONF_TITLE = "CheckWatt"
 
@@ -74,6 +80,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_POWER_SENSORS: False,
                     CONF_PUSH_CW_TO_RANK: False,
                     CONF_CM10_SENSOR: True,
+                    CONF_CWR_NAME: "",
                 },
             )
 
@@ -120,6 +127,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                         CONF_CM10_SENSOR,
                         default=self.config_entry.options.get(CONF_CM10_SENSOR),
                     ): bool,
+                    vol.Optional(
+                        CONF_CWR_NAME,
+                        default=self.config_entry.options.get(CONF_CWR_NAME),
+                    ): str,
                 }
             ),
         )

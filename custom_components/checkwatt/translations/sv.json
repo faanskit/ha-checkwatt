@@ -25,7 +25,8 @@
                 "data": {
                     "show_details": "Skapa energisensorer",
                     "push_to_cw_rank": "Skicka data till CheckWattRank",
-                    "cm10_sensor": "Skapa CM10 sensor"
+                    "cm10_sensor": "Skapa CM10 sensor",
+                    "cwr_name": "Systemnamn till CheckWattRank"
                 },
                 "description": "Dina val",
                 "title": "CheckWatt"
