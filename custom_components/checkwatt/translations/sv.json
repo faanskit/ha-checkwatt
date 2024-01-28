@@ -56,9 +56,6 @@
                     "energy_provider": {
                         "name": "Elhandelsbolag"
                     },
-                    "tomorrow_net_income": {
-                        "name": "Morgondagens Nettointäkt"
-                    },
                     "last_update": {
                         "name": "Senaste uppdateringen"
                     },

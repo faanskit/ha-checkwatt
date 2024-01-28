@@ -59,7 +59,6 @@ class CheckwattResp(TypedDict):
     discharge_peak_dc: float
 
     today_net_revenue: float
-    tomorrow_net_revenue: float
     monthly_net_revenue: float
     annual_net_revenue: float
     month_estimate: float
@@ -158,7 +157,6 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
         self._id = None
         self.update_all = 0
         self.fcrd_today_net_revenue = None
-        self.fcrd_tomorrow_net_revenue = None
         self.fcrd_month_net_revenue = None
         self.fcrd_month_net_estimate = None
         self.fcrd_daily_net_average = None
@@ -216,7 +214,6 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                         raise UpdateFailed("Unknown error get_revenue_year")
 
                     self.fcrd_today_net_revenue = cw_inst.fcrd_today_net_revenue
-                    self.fcrd_tomorrow_net_revenue = cw_inst.fcrd_tomorrow_net_revenue
                     self.fcrd_month_net_revenue = cw_inst.fcrd_month_net_revenue
                     self.fcrd_month_net_estimate = cw_inst.fcrd_month_net_estimate
                     self.fcrd_daily_net_average = cw_inst.fcrd_daily_net_average
@@ -291,7 +288,6 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                 # Use self stored variant of revenue parameters as they are not always fetched
                 if self.fcrd_today_net_revenue is not None:
                     resp["today_net_revenue"] = self.fcrd_today_net_revenue
-                    resp["tomorrow_net_revenue"] = self.fcrd_tomorrow_net_revenue
                 if self.fcrd_month_net_revenue is not None:
                     resp["monthly_net_revenue"] = self.fcrd_month_net_revenue
                     resp["month_estimate"] = self.fcrd_month_net_estimate

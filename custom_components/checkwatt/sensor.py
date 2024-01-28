@@ -41,7 +41,6 @@ from .const import (
     C_NEXT_UPDATE_TIME,
     C_PRICE_ZONE,
     C_SOLAR_POWER,
-    C_TOMORROW_NET,
     C_UPDATE_TIME,
     C_VAT,
     C_ZIP,
@@ -281,14 +280,6 @@ class CheckwattSensor(AbstractCheckwattSensor):
             self._attr_extra_state_attributes.update(
                 {C_ENERGY_PROVIDER: self._coordinator.data["energy_provider"]}
             )
-        if "tomorrow_net_revenue" in self._coordinator.data:
-            self._attr_extra_state_attributes.update(
-                {
-                    C_TOMORROW_NET: round(
-                        self._coordinator.data["tomorrow_net_revenue"], 2
-                    )
-                }
-            )
         if "update_time" in self._coordinator.data:
             self._attr_extra_state_attributes.update(
                 {C_UPDATE_TIME: self._coordinator.data["update_time"]}
@@ -307,15 +298,6 @@ class CheckwattSensor(AbstractCheckwattSensor):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Get the latest data and updates the states."""
-        # Update the native value
-        if "tomorrow_net_revenue" in self._coordinator.data:
-            self._attr_extra_state_attributes.update(
-                {
-                    C_TOMORROW_NET: round(
-                        self._coordinator.data["tomorrow_net_revenue"], 2
-                    )
-                }
-            )
         if "update_time" in self._coordinator.data:
             self._attr_extra_state_attributes.update(
                 {C_UPDATE_TIME: self._coordinator.data["update_time"]}
