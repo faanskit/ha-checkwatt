@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from datetime import time, timedelta
 import logging
+import random
 from typing import TypedDict
 
 import aiohttp
@@ -156,6 +157,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
         self.fcrd_timestamp = None
         self._id = None
         self.update_all = 0
+        self.random_offset = random.randint(0, 14)
         self.fcrd_today_net_revenue = None
         self.fcrd_month_net_revenue = None
         self.fcrd_month_net_estimate = None
@@ -236,6 +238,12 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     # Store fcrd_state at boot, used to spark event
                     self.fcrd_state = cw_inst.fcrd_state
                     self._id = cw_inst.customer_details["Id"]
+                (
+                    charge_peak_ac,
+                    charge_peak_dc,
+                    discharge_peak_ac,
+                    discharge_peak_dc,
+                ) = await getPeakData(cw_inst)
 
                 # Price Zone is used both as Detailed Sensor and by Push to CheckWattRank
                 if push_to_cw_rank or use_power_sensors:
@@ -255,7 +263,9 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                         != dt_util.start_of_local_day(self.last_cw_rank_push)
                     ):
                         _LOGGER.debug("Pushing to CheckWattRank")
-                        if await self.push_to_checkwatt_rank(cw_inst, cwr_name):
+                        if await self.push_to_checkwatt_rank(
+                            cw_inst, charge_peak_ac, cwr_name
+                        ):
                             self.last_cw_rank_push = dt_util.now()
 
                 resp: CheckwattResp = {
@@ -274,12 +284,6 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     resp["grid_power"] = cw_inst.grid_power
                     resp["solar_power"] = cw_inst.solar_power
                     resp["battery_soc"] = cw_inst.battery_soc
-                    (
-                        charge_peak_ac,
-                        charge_peak_dc,
-                        discharge_peak_ac,
-                        discharge_peak_dc,
-                    ) = await getPeakData(cw_inst)
                     resp["charge_peak_ac"] = charge_peak_ac
                     resp["charge_peak_dc"] = charge_peak_dc
                     resp["discharge_peak_ac"] = discharge_peak_ac
@@ -376,9 +380,9 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
         except CheckwattError as err:
             raise UpdateFailed(str(err)) from err
 
-    async def push_to_checkwatt_rank(self, cw_inst, cwr_name):
+    async def push_to_checkwatt_rank(self, cw_inst, charge_peak, cwr_name):
         """Push data to CheckWattRank."""
-        if self.today_net_revenue is not None:
+        if self.fcrd_today_net_revenue is not None:
             if (
                 "Meter" in cw_inst.customer_details
                 and len(cw_inst.customer_details["Meter"]) > 0
@@ -391,10 +395,10 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     "dso": cw_inst.battery_registration["Dso"],
                     "electricity_company": self.energy_provider,
                     "electricity_area": cw_inst.price_zone,
-                    "installed_power": cw_inst.battery_charge_peak,
+                    "installed_power": charge_peak,
                     "today_gross_income": 0,
                     "today_fee": 0,
-                    "today_net_income": self.today_net_revenue,
+                    "today_net_income": self.fcrd_today_net_revenue,
                     "reseller_id": cw_inst.customer_details["Meter"][0]["ResellerId"],
                 }
                 if BASIC_TEST:
