@@ -400,6 +400,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     "today_fee": 0,
                     "today_net_income": self.fcrd_today_net_revenue,
                     "reseller_id": cw_inst.customer_details["Meter"][0]["ResellerId"],
+                    "reporter": "HomeAssistantV2",
                 }
                 if BASIC_TEST:
                     payload["display_name"] = "xxTESTxx"
