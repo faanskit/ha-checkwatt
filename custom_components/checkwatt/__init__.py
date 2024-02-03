@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import datetime
 from datetime import time, timedelta
 import logging
 import random
@@ -99,6 +98,42 @@ class CheckwattResp(TypedDict):
     fcr_d_date: str
 
 
+def get_display_name(cw, cwr_name):
+    """Pull DisplayName from CW Data."""
+    if cwr_name != "":
+        # Use default, if exist
+        return cwr_name
+
+    meters = cw.customer_details.get("Meter", [])
+    if meters:
+        soc_meter = next(
+            (meter for meter in meters if meter.get("InstallationType") == "SoC"),
+            None,
+        )
+
+        if not soc_meter:
+            _LOGGER.error("No SoC meter found")
+            return False
+
+        return soc_meter["DisplayName"]
+
+
+def get_reseller_id(cw):
+    """Pull ResellerId from CW Data."""
+    meters = cw.customer_details.get("Meter", [])
+    if meters:
+        soc_meter = next(
+            (meter for meter in meters if meter.get("InstallationType") == "SoC"),
+            None,
+        )
+
+        if not soc_meter:
+            _LOGGER.error("No SoC meter found")
+            return False
+
+        return soc_meter["ResellerId"]
+
+
 async def update_listener(hass: HomeAssistant, entry):
     """Handle options update."""
     _LOGGER.debug(entry.options)
@@ -117,16 +152,95 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def update_history_items(call: ServiceCall) -> ServiceResponse:
         """Fetch historical data from EIB and Update CheckWattRank."""
-        # items = await my_client.search(call.data["start"], call.data["end"])
         _LOGGER.debug(
             "Calling update_history service with start date: %s and end date %s",
             call.data["start_date"],
             call.data["end_date"],
         )
+        cwr_name = entry.options.get(CONF_CWR_NAME)
+        username = entry.data.get(CONF_USERNAME)
+        password = entry.data.get(CONF_PASSWORD)
+        count = 0
+        status = None
+        async with CheckwattManager(username, password, INTEGRATION_NAME) as cw:
+            try:
+                # Login to EnergyInBalance
+                if await cw.login():
+                    # Fetch customer detail
+                    if not await cw.get_customer_details():
+                        _LOGGER.error("Failed to fetch customer details")
+                        return {
+                            "status": "Failed to fetch customer details",
+                        }
+
+                    if not await cw.get_price_zone():
+                        _LOGGER.error("Failed to fetch prize zone")
+                        return {
+                            "status": "Failed to fetch prize zone",
+                        }
+
+                    hd = await cw.fetch_and_return_net_revenue(
+                        call.data["start_date"], call.data["end_date"]
+                    )
+                    if hd is None:
+                        _LOGGER.error("Failed to fetch revenue")
+                        return {
+                            "status": "Failed to fetch revenue",
+                        }
+
+                    data = {
+                        "display_name": get_display_name(cw, cwr_name),
+                        "dso": cw.battery_registration["Dso"],
+                        "electricity_area": cw.price_zone,
+                        "installed_power": cw.battery_charge_peak_ac,
+                        "electricity_company": cw.battery_registration[
+                            "ElectricityCompany"
+                        ],
+                        "reseller_id": get_reseller_id(cw),
+                        "reporter": "CheckWattRank",
+                        "historical_data": hd,
+                    }
+
+                    # Post data to Netlify function
+                    BASE_URL = "https://checkwattrank.netlify.app"
+                    netlify_function_url = (
+                        BASE_URL + "/.netlify/functions/publishHistory"
+                    )
+                    timeout_seconds = 10
+                    async with aiohttp.ClientSession() as session:  # noqa: SIM117
+                        async with session.post(
+                            netlify_function_url, json=data, timeout=timeout_seconds
+                        ) as response:
+                            if response.status == 200:
+                                result = await response.json()
+                                count = result.get("count", 0)
+                                status = result.get("message", 0)
+                                _LOGGER.debug(
+                                    "Data posted successfully. Count: %s", count
+                                )
+                            else:
+                                _LOGGER.debug(
+                                    "Failed to post data. Status code: %s",
+                                    response.status,
+                                )
+                else:
+                    status = "Failed to login."
+
+            except aiohttp.ClientError as e:
+                _LOGGER.error("Error pushing data to CheckWattRank: %s", e)
+                status = "Failed to push historical data."
+            except asyncio.TimeoutError:
+                _LOGGER.error(
+                    "Request to CheckWattRank timed out after %s seconds",
+                    timeout_seconds,
+                )
+                status = "Timeout pushing historical data."
+
         return {
             "start_date": call.data["start_date"],
             "end_date": call.data["end_date"],
-            "num_items": 0,
+            "status": status,
+            "num_items": count,
         }
 
     hass.services.async_register(
