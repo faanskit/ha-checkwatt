@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import datetime
 from datetime import time, timedelta
 import logging
 import random
@@ -10,11 +11,18 @@ from typing import TypedDict
 
 import aiohttp
 from pycheckwatt import CheckwattManager
+import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.core import (
+    HomeAssistant,
+    ServiceCall,
+    ServiceResponse,
+    SupportsResponse,
+)
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
@@ -35,6 +43,14 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.EVENT]
+
+UPDATE_HISTORY_SERVICE_NAME = "update_history"
+UPDATE_HISTORY_SCHEMA = vol.Schema(
+    {
+        vol.Required("start_date"): cv.date,
+        vol.Required("end_date"): cv.date,
+    }
+)
 
 
 class CheckwattResp(TypedDict):
@@ -98,6 +114,29 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
     entry.async_on_unload(entry.add_update_listener(update_listener))
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    async def update_history_items(call: ServiceCall) -> ServiceResponse:
+        """Fetch historical data from EIB and Update CheckWattRank."""
+        # items = await my_client.search(call.data["start"], call.data["end"])
+        _LOGGER.debug(
+            "Calling update_history service with start date: %s and end date %s",
+            call.data["start_date"],
+            call.data["end_date"],
+        )
+        return {
+            "start_date": call.data["start_date"],
+            "end_date": call.data["end_date"],
+            "num_items": 0,
+        }
+
+    hass.services.async_register(
+        DOMAIN,
+        UPDATE_HISTORY_SERVICE_NAME,
+        update_history_items,
+        schema=UPDATE_HISTORY_SCHEMA,
+        supports_response=SupportsResponse.ONLY,
+    )
+
     return True
 
 

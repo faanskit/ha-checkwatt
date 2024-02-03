@@ -1,0 +1,18 @@
+update_history:
+  name: "Update CheckWattRank History"
+  description: "Updates CheckWattRank with historical data from EnergyInBalances."
+  fields:
+    start_date:
+      name: "Start date"
+      description: "The start date to fetch history from"
+      required: true
+      example: "2023-12-01"
+      selector:
+        date:
+    end_date:
+      name: "End date"
+      description: "The end date to ftech history from"
+      required: true
+      example: "2024-01-01"
+      selector:
+        date:
