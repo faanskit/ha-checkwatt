@@ -51,6 +51,8 @@ UPDATE_HISTORY_SCHEMA = vol.Schema(
     }
 )
 
+CHECKWATTRANK_REPORTER = "HomeAssistantV2"
+
 
 class CheckwattResp(TypedDict):
     """API response."""
@@ -168,7 +170,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                         "installed_power": cw.battery_charge_peak_ac,
                         "electricity_company": energy_provider,
                         "reseller_id": cw.reseller_id,
-                        "reporter": "HomeAssistantV2",
+                        "reporter": CHECKWATTRANK_REPORTER,
                         "historical_data": hd,
                     }
 
@@ -481,7 +483,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                 "today_fee": 0,
                 "today_net_income": self.fcrd_today_net_revenue,
                 "reseller_id": cw_inst.reseller_id,
-                "reporter": "HomeAssistantV2",
+                "reporter": CHECKWATTRANK_REPORTER,
             }
             if BASIC_TEST:
                 payload["display_name"] = "xxTESTxx"
