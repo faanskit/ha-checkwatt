@@ -49,6 +49,10 @@ UPDATE_HISTORY_SCHEMA = vol.Schema(
     }
 )
 
+PUSH_CWR_SERVICE_NAME = "push_checkwatt_rank"
+PUSH_CWR_SCHEMA = None
+
+
 CHECKWATTRANK_REPORTER = "HomeAssistantV2"
 
 
@@ -196,11 +200,66 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             "total_items": total_items,
         }
 
+    async def push_cwr(call: ServiceCall) -> ServiceResponse:
+        """Push data to CheckWattRank."""
+        username = entry.data.get(CONF_USERNAME)
+        password = entry.data.get(CONF_PASSWORD)
+        cwr_name = entry.options.get(CONF_CWR_NAME)
+        status = None
+        async with CheckwattManager(username, password, INTEGRATION_NAME) as cw:
+            try:
+                # Login to EnergyInBalance
+                if await cw.login():
+                    # Fetch customer detail
+                    if not await cw.get_customer_details():
+                        _LOGGER.error("Failed to fetch customer details")
+                        return {
+                            "status": "Failed to fetch customer details",
+                        }
+
+                    if not await cw.get_price_zone():
+                        _LOGGER.error("Failed to fetch prize zone")
+                        return {
+                            "status": "Failed to fetch prize zone",
+                        }
+
+                    if not await cw.get_fcrd_today_net_revenue():
+                        raise UpdateFailed("Unknown error get_fcrd_revenue")
+
+                    display_name = cwr_name if cwr_name != "" else cw.display_name
+                    if await push_to_checkwatt_rank(
+                        cw, display_name, cw.fcrd_today_net_revenue
+                    ):
+                        status = "Data successfully sent to CheckWattRank"
+                    else:
+                        status = "Failed to update to CheckWattRank"
+
+                else:
+                    status = "Failed to login."
+
+            except InvalidAuth as err:
+                raise ConfigEntryAuthFailed from err
+
+            except CheckwattError as err:
+                status = f"Failed to update CheckWattRank: {err}"
+
+        return {
+            "result": status,
+        }
+
     hass.services.async_register(
         DOMAIN,
         UPDATE_HISTORY_SERVICE_NAME,
         update_history_items,
         schema=UPDATE_HISTORY_SCHEMA,
+        supports_response=SupportsResponse.ONLY,
+    )
+
+    hass.services.async_register(
+        DOMAIN,
+        PUSH_CWR_SERVICE_NAME,
+        push_cwr,
+        schema=PUSH_CWR_SCHEMA,
         supports_response=SupportsResponse.ONLY,
     )
 

@@ -16,3 +16,7 @@ update_history:
       example: "2024-01-01"
       selector:
         date:
+
+push_checkwatt_rank:
+  name: "Push Today's Revenue to CheckWattRank"
+  description: "Updates CheckWattRank with current revenues from EnergyInBalances."
