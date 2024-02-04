@@ -10,11 +10,18 @@ from typing import TypedDict
 
 import aiohttp
 from pycheckwatt import CheckwattManager
+import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.core import (
+    HomeAssistant,
+    ServiceCall,
+    ServiceResponse,
+    SupportsResponse,
+)
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
@@ -35,6 +42,16 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.EVENT]
+
+UPDATE_HISTORY_SERVICE_NAME = "update_history"
+UPDATE_HISTORY_SCHEMA = vol.Schema(
+    {
+        vol.Required("start_date"): cv.date,
+        vol.Required("end_date"): cv.date,
+    }
+)
+
+CHECKWATTRANK_REPORTER = "HomeAssistantV2"
 
 
 class CheckwattResp(TypedDict):
@@ -98,6 +115,117 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
     entry.async_on_unload(entry.add_update_listener(update_listener))
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    async def update_history_items(call: ServiceCall) -> ServiceResponse:
+        """Fetch historical data from EIB and Update CheckWattRank."""
+        start_date = call.data["start_date"]
+        end_date = call.data["end_date"]
+        start_date_str = start_date.strftime("%Y-%m-%d")
+        end_date_str = end_date.strftime("%Y-%m-%d")
+        _LOGGER.debug(
+            "Calling update_history service with start date: %s and end date %s",
+            start_date_str,
+            end_date_str,
+        )
+        username = entry.data.get(CONF_USERNAME)
+        password = entry.data.get(CONF_PASSWORD)
+        cwr_name = entry.options.get(CONF_CWR_NAME)
+        count = 0
+        total = 0
+        status = None
+        async with CheckwattManager(username, password, INTEGRATION_NAME) as cw:
+            try:
+                # Login to EnergyInBalance
+                if await cw.login():
+                    # Fetch customer detail
+                    if not await cw.get_customer_details():
+                        _LOGGER.error("Failed to fetch customer details")
+                        return {
+                            "status": "Failed to fetch customer details",
+                        }
+
+                    if not await cw.get_price_zone():
+                        _LOGGER.error("Failed to fetch prize zone")
+                        return {
+                            "status": "Failed to fetch prize zone",
+                        }
+
+                    hd = await cw.fetch_and_return_net_revenue(
+                        start_date_str, end_date_str
+                    )
+                    if hd is None:
+                        _LOGGER.error("Failed to fetch revenue")
+                        return {
+                            "status": "Failed to fetch revenue",
+                        }
+
+                    energy_provider = await cw.get_energy_trading_company(
+                        cw.energy_provider_id
+                    )
+
+                    data = {
+                        "display_name": cwr_name if cwr_name != "" else cw.display_name,
+                        "dso": cw.battery_registration["Dso"],
+                        "electricity_area": cw.price_zone,
+                        "installed_power": cw.battery_charge_peak_ac,
+                        "electricity_company": energy_provider,
+                        "reseller_id": cw.reseller_id,
+                        "reporter": CHECKWATTRANK_REPORTER,
+                        "historical_data": hd,
+                    }
+
+                    # Post data to Netlify function
+                    BASE_URL = "https://checkwattrank.netlify.app"
+                    netlify_function_url = (
+                        BASE_URL + "/.netlify/functions/publishHistory"
+                    )
+                    timeout_seconds = 10
+                    async with aiohttp.ClientSession() as session:  # noqa: SIM117
+                        async with session.post(
+                            netlify_function_url, json=data, timeout=timeout_seconds
+                        ) as response:
+                            if response.status == 200:
+                                result = await response.json()
+                                count = result.get("count", 0)
+                                total = result.get("total", 0)
+                                status = result.get("message", 0)
+                                _LOGGER.debug(
+                                    "Data posted successfully. Count: %s", count
+                                )
+                            else:
+                                _LOGGER.debug(
+                                    "Failed to post data. Status code: %s",
+                                    response.status,
+                                )
+                else:
+                    status = "Failed to login."
+
+            except aiohttp.ClientError as e:
+                _LOGGER.error("Error pushing data to CheckWattRank: %s", e)
+                status = "Failed to push historical data."
+            except asyncio.TimeoutError:
+                _LOGGER.error(
+                    "Request to CheckWattRank timed out after %s seconds",
+                    timeout_seconds,
+                )
+                status = "Timeout pushing historical data."
+
+        return {
+            "start_date": start_date_str,
+            "end_date": end_date_str,
+            "status": status,
+            "stored_items": count,
+            "total_items": total,
+        }
+
+    hass.services.async_register(
+        DOMAIN,
+        UPDATE_HISTORY_SERVICE_NAME,
+        update_history_items,
+        schema=UPDATE_HISTORY_SCHEMA,
+        supports_response=SupportsResponse.ONLY,
+    )
+
     return True
 
 
@@ -107,34 +235,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[DOMAIN].pop(entry.entry_id)
 
     return unload_ok
-
-
-async def getPeakData(cw_inst):
-    """Extract PeakAcDC Power."""
-    charge_peak_ac = 0
-    charge_peak_dc = 0
-    discharge_peak_ac = 0
-    discharge_peak_dc = 0
-
-    if cw_inst is None:
-        return (None, None, None, None)
-
-    if cw_inst.customer_details is None:
-        return (None, None, None, None)
-
-    if "Meter" in cw_inst.customer_details:
-        for meter in cw_inst.customer_details["Meter"]:
-            if "InstallationType" in meter:
-                if meter["InstallationType"] == "Charging":
-                    if "PeakAcKw" in meter and "PeakDcKw" in meter:
-                        charge_peak_ac += meter["PeakAcKw"]
-                        charge_peak_dc += meter["PeakDcKw"]
-                if meter["InstallationType"] == "Discharging":
-                    if "PeakAcKw" in meter and "PeakDcKw" in meter:
-                        discharge_peak_ac += meter["PeakAcKw"]
-                        discharge_peak_dc += meter["PeakDcKw"]
-
-    return (charge_peak_ac, charge_peak_dc, discharge_peak_ac, discharge_peak_dc)
 
 
 class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
@@ -226,24 +326,13 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
 
                 if self.is_boot:
                     self.is_boot = False
-                    if (
-                        "Meter" in cw_inst.customer_details
-                        and len(cw_inst.customer_details["Meter"]) > 0
-                        and "ElhandelsbolagId" in cw_inst.customer_details["Meter"][0]
-                    ):
-                        self.energy_provider = await cw_inst.get_energy_trading_company(
-                            cw_inst.customer_details["Meter"][0]["ElhandelsbolagId"]
-                        )
+                    self.energy_provider = await cw_inst.get_energy_trading_company(
+                        cw_inst.energy_provider_id
+                    )
 
                     # Store fcrd_state at boot, used to spark event
                     self.fcrd_state = cw_inst.fcrd_state
                     self._id = cw_inst.customer_details["Id"]
-                (
-                    charge_peak_ac,
-                    charge_peak_dc,
-                    discharge_peak_ac,
-                    discharge_peak_dc,
-                ) = await getPeakData(cw_inst)
 
                 # Price Zone is used both as Detailed Sensor and by Push to CheckWattRank
                 if push_to_cw_rank or use_power_sensors:
@@ -263,9 +352,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                         != dt_util.start_of_local_day(self.last_cw_rank_push)
                     ):
                         _LOGGER.debug("Pushing to CheckWattRank")
-                        if await self.push_to_checkwatt_rank(
-                            cw_inst, charge_peak_ac, cwr_name
-                        ):
+                        if await self.push_to_checkwatt_rank(cw_inst, cwr_name):
                             self.last_cw_rank_push = dt_util.now()
 
                 resp: CheckwattResp = {
@@ -275,7 +362,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     "address": cw_inst.customer_details["StreetAddress"],
                     "zip": cw_inst.customer_details["ZipCode"],
                     "city": cw_inst.customer_details["City"],
-                    "display_name": cw_inst.customer_details["Meter"][0]["DisplayName"],
+                    "display_name": cw_inst.display_name,
                     "dso": cw_inst.battery_registration["Dso"],
                     "energy_provider": self.energy_provider,
                 }
@@ -284,10 +371,10 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     resp["grid_power"] = cw_inst.grid_power
                     resp["solar_power"] = cw_inst.solar_power
                     resp["battery_soc"] = cw_inst.battery_soc
-                    resp["charge_peak_ac"] = charge_peak_ac
-                    resp["charge_peak_dc"] = charge_peak_dc
-                    resp["discharge_peak_ac"] = discharge_peak_ac
-                    resp["discharge_peak_dc"] = discharge_peak_dc
+                    resp["charge_peak_ac"] = cw_inst.battery_charge_peak_ac
+                    resp["charge_peak_dc"] = cw_inst.battery_charge_peak_dc
+                    resp["discharge_peak_ac"] = cw_inst.battery_discharge_peak_ac
+                    resp["discharge_peak_dc"] = cw_inst.battery_discharge_peak_dc
 
                 # Use self stored variant of revenue parameters as they are not always fetched
                 if self.fcrd_today_net_revenue is not None:
@@ -380,76 +467,66 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
         except CheckwattError as err:
             raise UpdateFailed(str(err)) from err
 
-    async def push_to_checkwatt_rank(self, cw_inst, charge_peak, cwr_name):
+    async def push_to_checkwatt_rank(self, cw_inst, cwr_name):
         """Push data to CheckWattRank."""
         if self.fcrd_today_net_revenue is not None:
-            if (
-                "Meter" in cw_inst.customer_details
-                and len(cw_inst.customer_details["Meter"]) > 0
-            ):
-                url = "https://checkwattrank.netlify.app/.netlify/functions/publishToSheet"
-                headers = {
-                    "Content-Type": "application/json",
-                }
-                payload = {
-                    "dso": cw_inst.battery_registration["Dso"],
-                    "electricity_company": self.energy_provider,
-                    "electricity_area": cw_inst.price_zone,
-                    "installed_power": charge_peak,
-                    "today_gross_income": 0,
-                    "today_fee": 0,
-                    "today_net_income": self.fcrd_today_net_revenue,
-                    "reseller_id": cw_inst.customer_details["Meter"][0]["ResellerId"],
-                    "reporter": "HomeAssistantV2",
-                }
-                if BASIC_TEST:
-                    payload["display_name"] = "xxTESTxx"
-                elif cwr_name != "":
-                    payload["display_name"] = cwr_name
-                else:
-                    payload["display_name"] = cw_inst.customer_details["Meter"][0][
-                        "DisplayName"
-                    ]
+            url = "https://checkwattrank.netlify.app/.netlify/functions/publishToSheet"
+            headers = {
+                "Content-Type": "application/json",
+            }
+            payload = {
+                "dso": cw_inst.battery_registration["Dso"],
+                "electricity_company": self.energy_provider,
+                "electricity_area": cw_inst.price_zone,
+                "installed_power": cw_inst.battery_charge_peak_ac,
+                "today_gross_income": 0,
+                "today_fee": 0,
+                "today_net_income": self.fcrd_today_net_revenue,
+                "reseller_id": cw_inst.reseller_id,
+                "reporter": CHECKWATTRANK_REPORTER,
+            }
+            if BASIC_TEST:
+                payload["display_name"] = "xxTESTxx"
+            elif cwr_name != "":
+                payload["display_name"] = cwr_name
+            else:
+                payload["display_name"] = cw_inst.display_name
 
-                # Specify a timeout value (in seconds)
-                timeout_seconds = 10
+            # Specify a timeout value (in seconds)
+            timeout_seconds = 10
 
-                async with aiohttp.ClientSession() as session:
-                    try:
-                        async with session.post(
-                            url, headers=headers, json=payload, timeout=timeout_seconds
-                        ) as response:
-                            response.raise_for_status()  # Raise an exception for HTTP errors
-                            content_type = response.headers.get(
-                                "Content-Type", ""
-                            ).lower()
-                            _LOGGER.debug(
-                                "CheckWattRank Push Response Content-Type: %s",
-                                content_type,
-                            )
-
-                            if "application/json" in content_type:
-                                result = await response.json()
-                                _LOGGER.debug("CheckWattRank Push Response: %s", result)
-                                return True
-                            elif "text/plain" in content_type:
-                                result = await response.text()
-                                _LOGGER.debug("CheckWattRank Push Response: %s", result)
-                                return True
-                            else:
-                                _LOGGER.warning(
-                                    "Unexpected Content-Type: %s", content_type
-                                )
-                                result = await response.text()
-                                _LOGGER.debug("CheckWattRank Push Response: %s", result)
-
-                    except aiohttp.ClientError as e:
-                        _LOGGER.error("Error pushing data to CheckWattRank: %s", e)
-                    except asyncio.TimeoutError:
-                        _LOGGER.error(
-                            "Request to CheckWattRank timed out after %s seconds",
-                            timeout_seconds,
+            async with aiohttp.ClientSession() as session:
+                try:
+                    async with session.post(
+                        url, headers=headers, json=payload, timeout=timeout_seconds
+                    ) as response:
+                        response.raise_for_status()  # Raise an exception for HTTP errors
+                        content_type = response.headers.get("Content-Type", "").lower()
+                        _LOGGER.debug(
+                            "CheckWattRank Push Response Content-Type: %s",
+                            content_type,
                         )
+
+                        if "application/json" in content_type:
+                            result = await response.json()
+                            _LOGGER.debug("CheckWattRank Push Response: %s", result)
+                            return True
+                        elif "text/plain" in content_type:
+                            result = await response.text()
+                            _LOGGER.debug("CheckWattRank Push Response: %s", result)
+                            return True
+                        else:
+                            _LOGGER.warning("Unexpected Content-Type: %s", content_type)
+                            result = await response.text()
+                            _LOGGER.debug("CheckWattRank Push Response: %s", result)
+
+                except aiohttp.ClientError as e:
+                    _LOGGER.error("Error pushing data to CheckWattRank: %s", e)
+                except asyncio.TimeoutError:
+                    _LOGGER.error(
+                        "Request to CheckWattRank timed out after %s seconds",
+                        timeout_seconds,
+                    )
 
         return False
 
