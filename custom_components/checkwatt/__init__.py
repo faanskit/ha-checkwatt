@@ -116,10 +116,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def update_history_items(call: ServiceCall) -> ServiceResponse:
         """Fetch historical data from EIB and Update CheckWattRank."""
+        start_date = call.data["start_date"]
+        end_date = call.data["end_date"]
+        start_date_str = start_date.strftime("%Y-%m-%d")
+        end_date_str = end_date.strftime("%Y-%m-%d")
         _LOGGER.debug(
             "Calling update_history service with start date: %s and end date %s",
-            call.data["start_date"],
-            call.data["end_date"],
+            start_date_str,
+            end_date_str,
         )
         username = entry.data.get(CONF_USERNAME)
         password = entry.data.get(CONF_PASSWORD)
@@ -145,7 +149,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                         }
 
                     hd = await cw.fetch_and_return_net_revenue(
-                        call.data["start_date"], call.data["end_date"]
+                        start_date_str, end_date_str
                     )
                     if hd is None:
                         _LOGGER.error("Failed to fetch revenue")
@@ -164,7 +168,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                         "installed_power": cw.battery_charge_peak_ac,
                         "electricity_company": energy_provider,
                         "reseller_id": cw.reseller_id,
-                        "reporter": "CheckWattRank",
+                        "reporter": "HomeAssistantV2",
                         "historical_data": hd,
                     }
 
@@ -205,8 +209,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 status = "Timeout pushing historical data."
 
         return {
-            "start_date": call.data["start_date"],
-            "end_date": call.data["end_date"],
+            "start_date": start_date_str,
+            "end_date": end_date_str,
             "status": status,
             "stored_items": count,
             "total_items": total,
