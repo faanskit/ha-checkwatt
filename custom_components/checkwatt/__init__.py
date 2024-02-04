@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-import asyncio
 from datetime import time, timedelta
 import logging
 import random
 from typing import TypedDict
 
-import aiohttp
-from pycheckwatt import CheckwattManager
+from pycheckwatt import CheckwattManager, CheckWattRankManager
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
@@ -130,9 +128,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         username = entry.data.get(CONF_USERNAME)
         password = entry.data.get(CONF_PASSWORD)
         cwr_name = entry.options.get(CONF_CWR_NAME)
-        count = 0
-        total = 0
         status = None
+        stored_items = 0
+        total_items = 0
         async with CheckwattManager(username, password, INTEGRATION_NAME) as cw:
             try:
                 # Login to EnergyInBalance
@@ -163,59 +161,39 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                         cw.energy_provider_id
                     )
 
-                    data = {
-                        "display_name": cwr_name if cwr_name != "" else cw.display_name,
-                        "dso": cw.battery_registration["Dso"],
-                        "electricity_area": cw.price_zone,
-                        "installed_power": cw.battery_charge_peak_ac,
-                        "electricity_company": energy_provider,
-                        "reseller_id": cw.reseller_id,
-                        "reporter": CHECKWATTRANK_REPORTER,
-                        "historical_data": hd,
-                    }
+                    async with CheckWattRankManager() as cwr:
+                        (
+                            status,
+                            stored_items,
+                            total_items,
+                        ) = await cwr.push_history_to_checkwatt_rank(
+                            display_name=(
+                                cwr_name if cwr_name != "" else cw.display_name
+                            ),
+                            dso=cw.battery_registration["Dso"],
+                            electricity_company=energy_provider,
+                            electricity_area=cw.price_zone,
+                            installed_power=cw.battery_charge_peak_ac,
+                            reseller_id=cw.reseller_id,
+                            reporter=CHECKWATTRANK_REPORTER,
+                            historical_data=hd,
+                        )
 
-                    # Post data to Netlify function
-                    BASE_URL = "https://checkwattrank.netlify.app"
-                    netlify_function_url = (
-                        BASE_URL + "/.netlify/functions/publishHistory"
-                    )
-                    timeout_seconds = 10
-                    async with aiohttp.ClientSession() as session:  # noqa: SIM117
-                        async with session.post(
-                            netlify_function_url, json=data, timeout=timeout_seconds
-                        ) as response:
-                            if response.status == 200:
-                                result = await response.json()
-                                count = result.get("count", 0)
-                                total = result.get("total", 0)
-                                status = result.get("message", 0)
-                                _LOGGER.debug(
-                                    "Data posted successfully. Count: %s", count
-                                )
-                            else:
-                                _LOGGER.debug(
-                                    "Failed to post data. Status code: %s",
-                                    response.status,
-                                )
                 else:
                     status = "Failed to login."
 
-            except aiohttp.ClientError as e:
-                _LOGGER.error("Error pushing data to CheckWattRank: %s", e)
-                status = "Failed to push historical data."
-            except asyncio.TimeoutError:
-                _LOGGER.error(
-                    "Request to CheckWattRank timed out after %s seconds",
-                    timeout_seconds,
-                )
-                status = "Timeout pushing historical data."
+            except InvalidAuth as err:
+                raise ConfigEntryAuthFailed from err
+
+            except CheckwattError as err:
+                status = f"Failed to update CheckWattRank: {err}"
 
         return {
             "start_date": start_date_str,
             "end_date": end_date_str,
             "status": status,
-            "stored_items": count,
-            "total_items": total,
+            "stored_items": stored_items,
+            "total_items": total_items,
         }
 
     hass.services.async_register(
@@ -235,6 +213,27 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[DOMAIN].pop(entry.entry_id)
 
     return unload_ok
+
+
+async def push_to_checkwatt_rank(cw_inst, cwr_name, today_net_income):
+    """Push data to CheckWattRank."""
+    if cw_inst.fcrd_today_net_revenue is not None:
+        energy_provider = await cw_inst.get_energy_trading_company(
+            cw_inst.energy_provider_id
+        )
+        async with CheckWattRankManager() as cwr:
+            if await cwr.push_to_checkwatt_rank(
+                display_name=(cwr_name if cwr_name != "" else cw_inst.display_name),
+                dso=cw_inst.battery_registration["Dso"],
+                electricity_company=energy_provider,
+                electricity_area=cw_inst.price_zone,
+                installed_power=cw_inst.battery_charge_peak_ac,
+                today_net_income=today_net_income,
+                reseller_id=cw_inst.reseller_id,
+                reporter=CHECKWATTRANK_REPORTER,
+            ):
+                return True
+    return False
 
 
 class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
@@ -351,9 +350,12 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                         and dt_util.start_of_local_day(dt_util.now())
                         != dt_util.start_of_local_day(self.last_cw_rank_push)
                     ):
-                        _LOGGER.debug("Pushing to CheckWattRank")
-                        if await self.push_to_checkwatt_rank(cw_inst, cwr_name):
-                            self.last_cw_rank_push = dt_util.now()
+                        if self.fcrd_today_net_revenue is not None:
+                            _LOGGER.debug("Pushing to CheckWattRank")
+                            if await push_to_checkwatt_rank(
+                                cw_inst, cwr_name, self.fcrd_today_net_revenue
+                            ):
+                                self.last_cw_rank_push = dt_util.now()
 
                 resp: CheckwattResp = {
                     "id": cw_inst.customer_details["Id"],
@@ -466,69 +468,6 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
             raise ConfigEntryAuthFailed from err
         except CheckwattError as err:
             raise UpdateFailed(str(err)) from err
-
-    async def push_to_checkwatt_rank(self, cw_inst, cwr_name):
-        """Push data to CheckWattRank."""
-        if self.fcrd_today_net_revenue is not None:
-            url = "https://checkwattrank.netlify.app/.netlify/functions/publishToSheet"
-            headers = {
-                "Content-Type": "application/json",
-            }
-            payload = {
-                "dso": cw_inst.battery_registration["Dso"],
-                "electricity_company": self.energy_provider,
-                "electricity_area": cw_inst.price_zone,
-                "installed_power": cw_inst.battery_charge_peak_ac,
-                "today_gross_income": 0,
-                "today_fee": 0,
-                "today_net_income": self.fcrd_today_net_revenue,
-                "reseller_id": cw_inst.reseller_id,
-                "reporter": CHECKWATTRANK_REPORTER,
-            }
-            if BASIC_TEST:
-                payload["display_name"] = "xxTESTxx"
-            elif cwr_name != "":
-                payload["display_name"] = cwr_name
-            else:
-                payload["display_name"] = cw_inst.display_name
-
-            # Specify a timeout value (in seconds)
-            timeout_seconds = 10
-
-            async with aiohttp.ClientSession() as session:
-                try:
-                    async with session.post(
-                        url, headers=headers, json=payload, timeout=timeout_seconds
-                    ) as response:
-                        response.raise_for_status()  # Raise an exception for HTTP errors
-                        content_type = response.headers.get("Content-Type", "").lower()
-                        _LOGGER.debug(
-                            "CheckWattRank Push Response Content-Type: %s",
-                            content_type,
-                        )
-
-                        if "application/json" in content_type:
-                            result = await response.json()
-                            _LOGGER.debug("CheckWattRank Push Response: %s", result)
-                            return True
-                        elif "text/plain" in content_type:
-                            result = await response.text()
-                            _LOGGER.debug("CheckWattRank Push Response: %s", result)
-                            return True
-                        else:
-                            _LOGGER.warning("Unexpected Content-Type: %s", content_type)
-                            result = await response.text()
-                            _LOGGER.debug("CheckWattRank Push Response: %s", result)
-
-                except aiohttp.ClientError as e:
-                    _LOGGER.error("Error pushing data to CheckWattRank: %s", e)
-                except asyncio.TimeoutError:
-                    _LOGGER.error(
-                        "Request to CheckWattRank timed out after %s seconds",
-                        timeout_seconds,
-                    )
-
-        return False
 
 
 class CheckwattError(HomeAssistantError):
