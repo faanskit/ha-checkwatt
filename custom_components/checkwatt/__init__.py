@@ -418,7 +418,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                 if push_to_cw_rank:
                     if self.last_cw_rank_push is None or (
                         dt_util.now().time()
-                        >= time(8, self.random_offset)  # Wait until 7am +- 15 min
+                        >= time(9, self.random_offset)  # Wait until 9am +- 15 min
                         and dt_util.start_of_local_day(dt_util.now())
                         != dt_util.start_of_local_day(self.last_cw_rank_push)
                     ):
