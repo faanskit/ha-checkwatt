@@ -102,6 +102,7 @@ class CheckwattResp(TypedDict):
     fcr_d_status: str
     fcr_d_info: str
     fcr_d_date: str
+    reseller_id: int
 
 
 async def update_listener(hass: HomeAssistant, entry):
