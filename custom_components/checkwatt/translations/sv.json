@@ -56,6 +56,9 @@
                     "energy_provider": {
                         "name": "Elhandelsbolag"
                     },
+                    "tomorrow_revenue": {
+                        "name": "Intäkt imorgon"
+                    },
                     "last_update": {
                         "name": "Senaste uppdateringen"
                     },
@@ -136,6 +139,9 @@
                     },
                     "discharge_peak_dc": {
                         "name": "Urladdningstopp DC"
+                    },
+                    "monthly_grid_peak_power": {
+                        "name": "Månadens maximala näteffekt"
                     }
                 }
             },
@@ -153,6 +159,9 @@
                     },
                     "fcr_d_date": {
                         "name": "FCR-D Datum"
+                    },
+                    "reseller_id": {
+                        "name": "Partner Id"
                     }
                 }
             }

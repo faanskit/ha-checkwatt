@@ -38,8 +38,10 @@ from .const import (
     C_FCRD_STATUS,
     C_GRID_POWER,
     C_MONTH_ESITIMATE,
+    C_MONTHLY_GRID_PEAK_POWER,
     C_NEXT_UPDATE_TIME,
     C_PRICE_ZONE,
+    C_RESELLER_ID,
     C_SOLAR_POWER,
     C_UPDATE_TIME,
     C_VAT,
@@ -510,6 +512,14 @@ class CheckwattBatterySoCSensor(AbstractCheckwattSensor):
             self._attr_extra_state_attributes.update(
                 {C_DISCHARGE_PEAK_DC: self._coordinator.data["discharge_peak_dc"]}
             )
+        if "monthly_grid_peak_power" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {
+                    C_MONTHLY_GRID_PEAK_POWER: self._coordinator.data[
+                        "monthly_grid_peak_power"
+                    ]
+                }
+            )
         self._attr_available = True
 
     @callback
@@ -544,6 +554,14 @@ class CheckwattBatterySoCSensor(AbstractCheckwattSensor):
         if "discharge_peak_dc" in self._coordinator.data:
             self._attr_extra_state_attributes.update(
                 {C_DISCHARGE_PEAK_DC: self._coordinator.data["discharge_peak_dc"]}
+            )
+        if "monthly_grid_peak_power" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {
+                    C_MONTHLY_GRID_PEAK_POWER: self._coordinator.data[
+                        "monthly_grid_peak_power"
+                    ]
+                }
             )
         super()._handle_coordinator_update()
 
@@ -582,6 +600,10 @@ class CheckwattCM10Sensor(AbstractCheckwattSensor):
             self._attr_extra_state_attributes.update(
                 {C_FCRD_DATE: self._coordinator.data["fcr_d_date"]}
             )
+        if "reseller_id" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_RESELLER_ID: self._coordinator.data["reseller_id"]}
+            )
         self._attr_available = True
 
     @callback
@@ -608,6 +630,10 @@ class CheckwattCM10Sensor(AbstractCheckwattSensor):
         if "fcr_d_date" in self._coordinator.data:
             self._attr_extra_state_attributes.update(
                 {C_FCRD_DATE: self._coordinator.data["fcr_d_date"]}
+            )
+        if "reseller_id" in self._coordinator.data:
+            self._attr_extra_state_attributes.update(
+                {C_RESELLER_ID: self._coordinator.data["reseller_id"]}
             )
         super()._handle_coordinator_update()
 

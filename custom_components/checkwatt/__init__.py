@@ -77,6 +77,7 @@ class CheckwattResp(TypedDict):
     charge_peak_dc: float
     discharge_peak_ac: float
     discharge_peak_dc: float
+    monthly_grid_peak_power: float
 
     today_net_revenue: float
     monthly_net_revenue: float
@@ -321,6 +322,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
         self.fcrd_month_net_estimate = None
         self.fcrd_daily_net_average = None
         self.fcrd_year_net_revenue = None
+        self.monthly_grid_peak_power = None
 
     @property
     def entry_id(self) -> str:
@@ -373,11 +375,18 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     if not await cw_inst.get_fcrd_year_net_revenue():
                         raise UpdateFailed("Unknown error get_revenue_year")
 
+                    _LOGGER.debug("Fetching montly peak power")
+                    if not await cw_inst.get_battery_month_peak_effect():
+                        raise UpdateFailed(
+                            "Unknown error get_battery_month_peak_effect"
+                        )
+
                     self.fcrd_today_net_revenue = cw_inst.fcrd_today_net_revenue
                     self.fcrd_month_net_revenue = cw_inst.fcrd_month_net_revenue
                     self.fcrd_month_net_estimate = cw_inst.fcrd_month_net_estimate
                     self.fcrd_daily_net_average = cw_inst.fcrd_daily_net_average
                     self.fcrd_year_net_revenue = cw_inst.fcrd_year_net_revenue
+                    self.monthly_grid_peak_power = cw_inst.month_peak_effect
 
                 if not self.is_boot:
                     self.update_all -= 1
@@ -426,6 +435,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     "display_name": cw_inst.display_name,
                     "dso": cw_inst.battery_registration["Dso"],
                     "energy_provider": self.energy_provider,
+                    "reseller_id": cw_inst.reseller_id,
                 }
                 if cw_inst.energy_data is not None:
                     resp["battery_power"] = cw_inst.battery_power
@@ -436,6 +446,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     resp["charge_peak_dc"] = cw_inst.battery_charge_peak_dc
                     resp["discharge_peak_ac"] = cw_inst.battery_discharge_peak_ac
                     resp["discharge_peak_dc"] = cw_inst.battery_discharge_peak_dc
+                    resp["monthly_grid_peak_power"] = self.monthly_grid_peak_power
 
                 # Use self stored variant of revenue parameters as they are not always fetched
                 if self.fcrd_today_net_revenue is not None:

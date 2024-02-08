@@ -56,6 +56,9 @@
                     "energy_provider": {
                         "name": "Energy Provider"
                     },
+                    "tomorrow_revenue": {
+                        "name": "Net Income Tomorrow"
+                    },
                     "last_update": {
                         "name": "Last update"
                     },
@@ -136,6 +139,9 @@
                     },
                     "discharge_peak_dc": {
                         "name": "Discharge Peak DC"
+                    },
+                    "monthly_grid_peak_power": {
+                        "name": "Montly Peak Grid Power"
                     }
                 }
             },
@@ -153,6 +159,9 @@
                     },
                     "fcr_d_date": {
                         "name": "FCR-D Date"
+                    },
+                    "reseller_id": {
+                        "name": "Partner Id"
                     }
                 }
             }
