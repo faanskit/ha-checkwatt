@@ -56,7 +56,7 @@
                     "energy_provider": {
                         "name": "Elhandelsbolag"
                     },
-                    "tomorrow_revenue": {
+                    "tomorrow_net_revenue": {
                         "name": "Intäkt imorgon"
                     },
                     "last_update": {

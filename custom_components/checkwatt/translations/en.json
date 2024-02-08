@@ -56,8 +56,8 @@
                     "energy_provider": {
                         "name": "Energy Provider"
                     },
-                    "tomorrow_revenue": {
-                        "name": "Net Income Tomorrow"
+                    "tomorrow_net_revenue": {
+                        "name": "Tomorrow Net Income"
                     },
                     "last_update": {
                         "name": "Last update"
