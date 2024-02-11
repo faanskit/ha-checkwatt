@@ -437,10 +437,11 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     "zip": cw_inst.customer_details["ZipCode"],
                     "city": cw_inst.customer_details["City"],
                     "display_name": cw_inst.display_name,
-                    "dso": cw_inst.battery_registration["Dso"],
                     "energy_provider": self.energy_provider,
                     "reseller_id": cw_inst.reseller_id,
                 }
+                if cw_inst.battery_registration is not None:
+                    resp["dso"] = cw_inst.battery_registration["Dso"]
                 if cw_inst.energy_data is not None:
                     resp["battery_power"] = cw_inst.battery_power
                     resp["grid_power"] = cw_inst.grid_power
