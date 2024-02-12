@@ -356,9 +356,10 @@ class CheckwattMonthlySensor(AbstractCheckwattSensor):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Get the latest data and updates the states."""
-        self._attr_native_value = round(
-            self._coordinator.data["monthly_net_revenue"], 2
-        )
+        if "monthly_net_revenue" in self._coordinator.data:
+            self._attr_native_value = round(
+                self._coordinator.data["monthly_net_revenue"], 2
+            )
         if "month_estimate" in self._coordinator.data:
             self._attr_extra_state_attributes.update(
                 {C_MONTH_ESITIMATE: round(self._coordinator.data["month_estimate"], 2)}
@@ -398,7 +399,10 @@ class CheckwattAnnualSensor(AbstractCheckwattSensor):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Get the latest data and updates the states."""
-        self._attr_native_value = round(self._coordinator.data["annual_net_revenue"], 2)
+        if "annual_net_revenue" in self._coordinator.data:
+            self._attr_native_value = round(
+                self._coordinator.data["annual_net_revenue"], 2
+            )
         super()._handle_coordinator_update()
 
     @property
