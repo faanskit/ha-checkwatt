@@ -169,6 +169,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     )
 
                     async with CheckWattRankManager() as cwr:
+                        dso = ""
+                        if cw.battery_registration is not None:
+                            if "Dso" in cw.battery_registration:
+                                dso = cw.battery_registration["Dso"]
+
                         (
                             status,
                             stored_items,
@@ -177,10 +182,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                             display_name=(
                                 cwr_name if cwr_name != "" else cw.display_name
                             ),
-                            dso=cw.battery_registration["Dso"],
+                            dso=dso,
                             electricity_company=energy_provider,
                             electricity_area=cw.price_zone,
-                            installed_power=cw.battery_charge_peak_ac,
+                            installed_power=min(
+                                cw.battery_charge_peak_ac,
+                                cw.battery_discharge_peak_ac,
+                            ),
                             reseller_id=cw.reseller_id,
                             reporter=CHECKWATTRANK_REPORTER,
                             historical_data=hd,
@@ -284,12 +292,18 @@ async def push_to_checkwatt_rank(cw_inst, cwr_name, today_net_income):
             cw_inst.energy_provider_id
         )
         async with CheckWattRankManager() as cwr:
+            dso = ""
+            if cw_inst.battery_registration is not None:
+                if "Dso" in cw_inst.battery_registration:
+                    dso = cw_inst.battery_registration["Dso"]
             if await cwr.push_to_checkwatt_rank(
                 display_name=(cwr_name if cwr_name != "" else cw_inst.display_name),
-                dso=cw_inst.battery_registration["Dso"],
+                dso=dso,
                 electricity_company=energy_provider,
                 electricity_area=cw_inst.price_zone,
-                installed_power=cw_inst.battery_charge_peak_ac,
+                installed_power=min(
+                    cw_inst.battery_charge_peak_ac, cw_inst.battery_discharge_peak_ac
+                ),
                 today_net_income=today_net_income,
                 reseller_id=cw_inst.reseller_id,
                 reporter=CHECKWATTRANK_REPORTER,
@@ -441,7 +455,8 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     "reseller_id": cw_inst.reseller_id,
                 }
                 if cw_inst.battery_registration is not None:
-                    resp["dso"] = cw_inst.battery_registration["Dso"]
+                    if "Dso" in cw_inst.battery_registration:
+                        resp["dso"] = cw_inst.battery_registration["Dso"]
                 if cw_inst.energy_data is not None:
                     resp["battery_power"] = cw_inst.battery_power
                     resp["grid_power"] = cw_inst.grid_power
