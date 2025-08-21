@@ -12,9 +12,9 @@
   "homekit": {},
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/faanskit/ha-checkwatt/issues",
-  "requirements": ["pycheckwatt>=0.2.9", "aiohttp>=3.9.1"],
+  "requirements": ["pycheckwatt>=0.2.10", "aiohttp>=3.9.1"],
   "ssdp": [],
-  "version": "0.2.4",
+  "version": "0.2.5",
   "zeroconf": []
 }
 
