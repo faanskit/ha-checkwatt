@@ -102,7 +102,7 @@ class CheckWattFCRDEvent(AbstractCheckwattEvent):
 
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
-        super().async_added_to_hass()
+        await super().async_added_to_hass()
         self.async_on_remove(
             async_dispatcher_connect(
                 self.hass,
