@@ -97,6 +97,15 @@
             "export_sensor": {
                 "name": "Exporterad Energi"
             },
+            "solar_power_sensor": {
+                "name": "Aktuell solenergi produktion"
+            },
+            "battery_power_sensor": {
+                "name": "Aktuell batteri effekt"
+            },
+            "grid_power_sensor": {
+                "name": "Aktuell nät effekt"
+            },
             "spot_price_sensor": {
                 "name": "Spotpris",
                 "state_attributes": {
