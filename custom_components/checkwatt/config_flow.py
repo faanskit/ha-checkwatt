@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from pycheckwatt import CheckwattManager
 import voluptuous as vol
 
 from homeassistant import config_entries
@@ -14,6 +13,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 
+from .api import CheckwattRateLimitError, create_checkwatt_manager
 from .const import (
     CONF_CM10_SENSOR,
     CONF_CWR_NAME,
@@ -36,11 +36,16 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
     """Validate that the user input allows us to connect to CheckWatt."""
-    async with CheckwattManager(
-        data[CONF_USERNAME], data[CONF_PASSWORD]
+    async with create_checkwatt_manager(
+        hass,
+        data[CONF_USERNAME],
+        data[CONF_PASSWORD],
     ) as check_watt_instance:
-        if not await check_watt_instance.login():
-            raise InvalidAuth
+        try:
+            if not await check_watt_instance.login():
+                raise InvalidAuth
+        except CheckwattRateLimitError as err:
+            raise CannotConnect from err
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
