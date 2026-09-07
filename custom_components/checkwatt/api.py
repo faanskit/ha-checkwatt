@@ -1,5 +1,8 @@
 """Compatibility helpers for the pyCheckwatt API."""
 
+from importlib.metadata import PackageNotFoundError, version
+
+from packaging.version import Version
 from pycheckwatt import CheckwattManager
 
 from homeassistant.core import HomeAssistant
@@ -14,7 +17,14 @@ except ImportError:
         """Placeholder that cannot be raised by legacy pyCheckwatt."""
 
 else:
-    PYCHECKWATT_SUPPORTS_PERSISTENT_AUTH = True
+    # Earlier development builds exposed the exception before retained revenue
+    # was safe. The stabilized release is the persistence boundary.
+    try:
+        PYCHECKWATT_SUPPORTS_PERSISTENT_AUTH = Version(
+            version("pycheckwatt")
+        ) >= Version("0.2.12")
+    except PackageNotFoundError:
+        PYCHECKWATT_SUPPORTS_PERSISTENT_AUTH = False
 
 
 def create_checkwatt_manager(

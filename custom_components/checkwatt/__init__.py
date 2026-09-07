@@ -37,6 +37,7 @@ from .const import (
     INTEGRATION_NAME,
 )
 from .api import (
+    PYCHECKWATT_SUPPORTS_PERSISTENT_AUTH,
     CheckwattRateLimitError,
     create_checkwatt_manager,
 )
@@ -339,11 +340,15 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
             update_interval=timedelta(minutes=CONF_UPDATE_INTERVAL_ALL),
         )
         self._entry = entry
-        self.client = create_checkwatt_manager(
-            hass,
-            entry.data.get(CONF_USERNAME),
-            entry.data.get(CONF_PASSWORD),
-            INTEGRATION_NAME,
+        self.client = (
+            create_checkwatt_manager(
+                hass,
+                entry.data.get(CONF_USERNAME),
+                entry.data.get(CONF_PASSWORD),
+                INTEGRATION_NAME,
+            )
+            if PYCHECKWATT_SUPPORTS_PERSISTENT_AUTH
+            else None
         )
         self.last_cw_rank_push = None
         self.is_boot = True
@@ -376,7 +381,14 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
             use_cm10_sensor = self._entry.options.get(CONF_CM10_SENSOR)
             cwr_name = self._entry.options.get(CONF_CWR_NAME)
 
-            async with self.client as cw_inst:
+            # Legacy managers accumulate revenue and must be fresh per poll.
+            client = self.client or create_checkwatt_manager(
+                self.hass,
+                self._entry.data.get(CONF_USERNAME),
+                self._entry.data.get(CONF_PASSWORD),
+                INTEGRATION_NAME,
+            )
+            async with client as cw_inst:
                 if not await cw_inst.login():
                     _LOGGER.error("Failed to login, abort update")
                     raise UpdateFailed("Failed to login")
@@ -396,7 +408,6 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
 
                 # Only fetch some parameters every 15 min
                 if self.update_all == 0 and not self.is_boot:
-                    self.update_all = CONF_UPDATE_INTERVAL_MONETARY
                     _LOGGER.debug("Fetching daily revenue")
                     if not await cw_inst.get_fcrd_today_net_revenue():
                         raise UpdateFailed("Unknown error get_fcrd_revenue")
@@ -422,12 +433,12 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     self.fcrd_daily_net_average = cw_inst.fcrd_daily_net_average
                     self.fcrd_year_net_revenue = cw_inst.fcrd_year_net_revenue
                     self.monthly_grid_peak_power = cw_inst.month_peak_effect
+                    self.update_all = CONF_UPDATE_INTERVAL_MONETARY
 
                 if not self.is_boot:
                     self.update_all -= 1
 
                 if self.is_boot:
-                    self.is_boot = False
                     self.energy_provider = await cw_inst.get_energy_trading_company(
                         cw_inst.energy_provider_id
                     )
@@ -435,6 +446,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     # Store fcrd_state at boot, used to spark event
                     self.fcrd_state = cw_inst.fcrd_state
                     self._id = cw_inst.customer_details["Id"]
+                    self.is_boot = False
 
                 # Price Zone is used both as Detailed Sensor and by Push to CheckWattRank
                 if push_to_cw_rank or use_power_sensors:
