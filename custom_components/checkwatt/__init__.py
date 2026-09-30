@@ -7,7 +7,7 @@ import logging
 import random
 from typing import TypedDict
 
-from pycheckwatt import CheckwattManager, CheckWattRankManager
+from pycheckwatt import CheckWattRankManager
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
@@ -35,6 +35,11 @@ from .const import (
     DOMAIN,
     EVENT_SIGNAL_FCRD,
     INTEGRATION_NAME,
+)
+from .api import (
+    PYCHECKWATT_SUPPORTS_PERSISTENT_AUTH,
+    CheckwattRateLimitError,
+    create_checkwatt_manager,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -138,7 +143,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         status = None
         stored_items = 0
         total_items = 0
-        async with CheckwattManager(username, password, INTEGRATION_NAME) as cw:
+        async with create_checkwatt_manager(
+            hass, username, password, INTEGRATION_NAME
+        ) as cw:
             try:
                 # Login to EnergyInBalance
                 if await cw.login():
@@ -203,6 +210,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             except CheckwattError as err:
                 status = f"Failed to update CheckWattRank: {err}"
 
+            except CheckwattRateLimitError as err:
+                status = f"CheckWatt rate limited requests for {err.retry_after}"
+
         return {
             "start_date": start_date_str,
             "end_date": end_date_str,
@@ -217,7 +227,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         password = entry.data.get(CONF_PASSWORD)
         cwr_name = entry.options.get(CONF_CWR_NAME)
         status = None
-        async with CheckwattManager(username, password, INTEGRATION_NAME) as cw:
+        async with create_checkwatt_manager(
+            hass, username, password, INTEGRATION_NAME
+        ) as cw:
             try:
                 # Login to EnergyInBalance
                 if await cw.login():
@@ -253,6 +265,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
             except CheckwattError as err:
                 status = f"Failed to update CheckWattRank: {err}"
+
+            except CheckwattRateLimitError as err:
+                status = f"CheckWatt rate limited requests for {err.retry_after}"
 
         return {
             "result": status,
@@ -320,10 +335,21 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=entry,
             name=DOMAIN,
             update_interval=timedelta(minutes=CONF_UPDATE_INTERVAL_ALL),
         )
         self._entry = entry
+        self.client = (
+            create_checkwatt_manager(
+                hass,
+                entry.data.get(CONF_USERNAME),
+                entry.data.get(CONF_PASSWORD),
+                INTEGRATION_NAME,
+            )
+            if PYCHECKWATT_SUPPORTS_PERSISTENT_AUTH
+            else None
+        )
         self.last_cw_rank_push = None
         self.is_boot = True
         self.energy_provider = None
@@ -350,16 +376,19 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
         """Fetch the latest data from the source."""
 
         try:
-            username = self._entry.data.get(CONF_USERNAME)
-            password = self._entry.data.get(CONF_PASSWORD)
             use_power_sensors = self._entry.options.get(CONF_POWER_SENSORS)
             push_to_cw_rank = self._entry.options.get(CONF_PUSH_CW_TO_RANK)
             use_cm10_sensor = self._entry.options.get(CONF_CM10_SENSOR)
             cwr_name = self._entry.options.get(CONF_CWR_NAME)
 
-            async with CheckwattManager(
-                username, password, INTEGRATION_NAME
-            ) as cw_inst:
+            # Legacy managers accumulate revenue and must be fresh per poll.
+            client = self.client or create_checkwatt_manager(
+                self.hass,
+                self._entry.data.get(CONF_USERNAME),
+                self._entry.data.get(CONF_PASSWORD),
+                INTEGRATION_NAME,
+            )
+            async with client as cw_inst:
                 if not await cw_inst.login():
                     _LOGGER.error("Failed to login, abort update")
                     raise UpdateFailed("Failed to login")
@@ -379,7 +408,6 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
 
                 # Only fetch some parameters every 15 min
                 if self.update_all == 0 and not self.is_boot:
-                    self.update_all = CONF_UPDATE_INTERVAL_MONETARY
                     _LOGGER.debug("Fetching daily revenue")
                     if not await cw_inst.get_fcrd_today_net_revenue():
                         raise UpdateFailed("Unknown error get_fcrd_revenue")
@@ -405,12 +433,12 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     self.fcrd_daily_net_average = cw_inst.fcrd_daily_net_average
                     self.fcrd_year_net_revenue = cw_inst.fcrd_year_net_revenue
                     self.monthly_grid_peak_power = cw_inst.month_peak_effect
+                    self.update_all = CONF_UPDATE_INTERVAL_MONETARY
 
                 if not self.is_boot:
                     self.update_all -= 1
 
                 if self.is_boot:
-                    self.is_boot = False
                     self.energy_provider = await cw_inst.get_energy_trading_company(
                         cw_inst.energy_provider_id
                     )
@@ -418,6 +446,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     # Store fcrd_state at boot, used to spark event
                     self.fcrd_state = cw_inst.fcrd_state
                     self._id = cw_inst.customer_details["Id"]
+                    self.is_boot = False
 
                 # Price Zone is used both as Detailed Sensor and by Push to CheckWattRank
                 if push_to_cw_rank or use_power_sensors:
@@ -555,6 +584,11 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
 
                 return resp
 
+        except CheckwattRateLimitError as err:
+            raise UpdateFailed(
+                "CheckWatt rate limited requests",
+                retry_after=err.retry_after.total_seconds(),
+            ) from err
         except InvalidAuth as err:
             raise ConfigEntryAuthFailed from err
         except CheckwattError as err:
