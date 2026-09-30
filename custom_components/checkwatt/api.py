@@ -22,7 +22,7 @@ else:
     try:
         PYCHECKWATT_SUPPORTS_PERSISTENT_AUTH = Version(
             version("pycheckwatt")
-        ) >= Version("0.2.12")
+        ) >= Version("0.3.0")
     except PackageNotFoundError:
         PYCHECKWATT_SUPPORTS_PERSISTENT_AUTH = False
 
