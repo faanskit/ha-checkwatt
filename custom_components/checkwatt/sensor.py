@@ -12,7 +12,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import PERCENTAGE, UnitOfEnergy
+from homeassistant.const import PERCENTAGE, UnitOfEnergy, UnitOfPower
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -148,6 +148,33 @@ CHECKWATT_ENERGY_SENSORS: dict[str, SensorEntityDescription] = {
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         state_class=SensorStateClass.TOTAL_INCREASING,
         translation_key="export_sensor",
+    ),
+    "solar_power": SensorEntityDescription(
+        key="solar_power",
+        name="Current Solar Production",
+        icon="mdi:solar-power-variant-outline",
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        state_class=SensorStateClass.MEASUREMENT,
+        translation_key="solar_power_sensor",
+    ),
+    "battery_power": SensorEntityDescription(
+        key="battery_power",
+        name="Current Battery Power",
+        icon="mdi:home-battery",
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        state_class=SensorStateClass.MEASUREMENT,
+        translation_key="battery_power_sensor",
+    ),
+    "grid_power": SensorEntityDescription(
+        key="grid_power",
+        name="Current Grid Power",
+        icon="mdi:transmission-tower-export",
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        state_class=SensorStateClass.MEASUREMENT,
+        translation_key="grid_power_sensor",
     ),
 }
 

@@ -97,6 +97,15 @@
             "export_sensor": {
                 "name": "Export Energy"
             },
+            "solar_power_sensor": {
+                "name": "Current Solar Production"
+            },
+            "battery_power_sensor": {
+                "name": "Current Battery Power"
+            },
+            "grid_power_sensor": {
+                "name": "Current Grid Power"
+            },
             "spot_price_sensor": {
                 "name": "Spot Price",
                 "state_attributes": {
