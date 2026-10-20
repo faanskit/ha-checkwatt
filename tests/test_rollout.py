@@ -132,6 +132,40 @@ async def test_poll_throttling_reaches_ha_scheduler(coordinator, backend):
 
 
 @pytest.mark.asyncio
+async def test_repeated_throttling_backs_off_exponentially(coordinator, backend):
+    if not api.PYCHECKWATT_SUPPORTS_PERSISTENT_AUTH:
+        pytest.skip("Legacy wheel cannot expose Retry-After")
+    _, failures, _ = backend
+    await coordinator._async_update_data()
+    failures["/controlpanel/CustomerDetail"] = (429, {})
+    delays = []
+    for _ in range(7):
+        with pytest.raises(UpdateFailed) as error:
+            await coordinator._async_update_data()
+        delays.append(error.value.retry_after)
+    assert delays == [60, 120, 240, 480, 960, 1800, 1800]
+    failures.clear()
+    await coordinator._async_update_data()
+    failures["/controlpanel/CustomerDetail"] = (429, {})
+    with pytest.raises(UpdateFailed) as error:
+        await coordinator._async_update_data()
+    assert error.value.retry_after == 60
+
+
+@pytest.mark.asyncio
+async def test_server_retry_after_is_never_shortened(coordinator, backend):
+    if not api.PYCHECKWATT_SUPPORTS_PERSISTENT_AUTH:
+        pytest.skip("Legacy wheel cannot expose Retry-After")
+    _, failures, _ = backend
+    await coordinator._async_update_data()
+    failures["/controlpanel/CustomerDetail"] = 429
+    for _ in range(3):
+        with pytest.raises(UpdateFailed) as error:
+            await coordinator._async_update_data()
+        assert error.value.retry_after == 600
+
+
+@pytest.mark.asyncio
 async def test_setup_throttling_uses_config_entry_retry(coordinator, backend):
     _, failures, _ = backend
     failures["/controlpanel/CustomerDetail"] = 429

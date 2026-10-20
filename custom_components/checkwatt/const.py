@@ -8,6 +8,9 @@ INTEGRATION_NAME = "ha-checkwatt"
 # Update interval for regular sensors is once every minute
 CONF_UPDATE_INTERVAL_ALL = 1
 CONF_UPDATE_INTERVAL_MONETARY = 15
+# Wait longer for each consecutive rate limit response (seconds)
+RATE_LIMIT_BACKOFF_MIN = 60
+RATE_LIMIT_BACKOFF_MAX = 30 * 60
 ATTRIBUTION = "Data provided by CheckWatt EnergyInBalance"
 MANUFACTURER = "CheckWatt"
 CHECKWATT_MODEL = "CheckWatt"

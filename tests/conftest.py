@@ -84,7 +84,10 @@ async def backend(monkeypatch):
         path = request.path
         calls[path] += 1
         if path in failures:
-            return web.Response(status=failures[path], headers={"Retry-After": "600"})
+            status, headers = failures[path], {"Retry-After": "600"}
+            if isinstance(status, tuple):
+                status, headers = status
+            return web.Response(status=status, headers=headers)
         if path == "/ha-killswitch.txt":
             return web.Response(text="0")
         if path in ("/user/Login", "/user/RefreshToken"):
