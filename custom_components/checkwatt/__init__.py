@@ -35,6 +35,8 @@ from .const import (
     DOMAIN,
     EVENT_SIGNAL_FCRD,
     INTEGRATION_NAME,
+    RATE_LIMIT_BACKOFF_MAX,
+    RATE_LIMIT_BACKOFF_MIN,
 )
 from .api import (
     PYCHECKWATT_SUPPORTS_PERSISTENT_AUTH,
@@ -358,6 +360,7 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
         self.fcrd_timestamp = None
         self._id = None
         self.update_all = 0
+        self.rate_limit_backoff = 0
         self.random_offset = random.randint(0, 14)
         self.fcrd_today_net_revenue = None
         self.fcrd_tomorrow_net_revenue = None
@@ -582,12 +585,21 @@ class CheckwattCoordinator(DataUpdateCoordinator[CheckwattResp]):
                     self.fcrd_info = cw_inst.fcrd_info
                     self.fcrd_timestamp = cw_inst.fcrd_timestamp
 
+                self.rate_limit_backoff = 0
                 return resp
 
         except CheckwattRateLimitError as err:
+            # Back off further for every consecutive rate limit, in case
+            # CheckWatt does not say how long to wait.
+            self.rate_limit_backoff = min(
+                self.rate_limit_backoff * 2 or RATE_LIMIT_BACKOFF_MIN,
+                RATE_LIMIT_BACKOFF_MAX,
+            )
             raise UpdateFailed(
                 "CheckWatt rate limited requests",
-                retry_after=err.retry_after.total_seconds(),
+                retry_after=max(
+                    err.retry_after.total_seconds(), self.rate_limit_backoff
+                ),
             ) from err
         except InvalidAuth as err:
             raise ConfigEntryAuthFailed from err
